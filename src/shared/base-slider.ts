@@ -1,4 +1,3 @@
-
 import { ServiceUtils } from "./utils";
 import { sliderStyles } from "../styles/sliders";
 import { sharedStyles } from "../styles/shared";
@@ -16,6 +15,7 @@ export class CustomSlider extends HTMLElement {
   private _isDragging: boolean = false;
   private _isScrollGesture: boolean = false;
   private _initialMoveHappened: boolean = false;
+  private _isReadyToDrag: boolean = false;
   private readonly _dragThreshold: number = 10;
   private _pressTimeout: number | null = null;
 
@@ -99,6 +99,7 @@ export class CustomSlider extends HTMLElement {
     this._isDragging = true;
     this._isScrollGesture = false;
     this._initialMoveHappened = false;
+    this._isReadyToDrag = false;
     this._startX = x;
     this._startY = y;
 
@@ -111,8 +112,11 @@ export class CustomSlider extends HTMLElement {
     this._updateVisuals(newValue);
 
     this._pressTimeout = window.setTimeout(() => {
-      this._value = newValue;
-      this._emitEvent("change");
+      this._isReadyToDrag = true;
+      if (!this._initialMoveHappened) {
+        this._value = newValue;
+        this._emitEvent("change");
+      }
       track.classList.remove("is-pressing");
       this._pressTimeout = null;
     }, 200);
@@ -160,10 +164,11 @@ export class CustomSlider extends HTMLElement {
       }
     }
 
-    if (this._pressTimeout) {
-      clearTimeout(this._pressTimeout);
-      this._pressTimeout = null;
-      this.shadowRoot?.querySelector(".slider-track")?.classList.remove("is-pressing");
+    if (!this._isReadyToDrag) {
+      if (this._pressTimeout) {
+        this._initialMoveHappened = true;
+      }
+      return;
     }
     
     if (type === "touch") e.preventDefault();
