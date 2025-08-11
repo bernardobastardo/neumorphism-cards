@@ -117,8 +117,6 @@ export const sliderStyles = css`
     background-color: var(--primary-text-color, #03a9f4);
     border-radius: 50%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    margin-top: calc(-1 * var(--thumb-size) / 2);
-    margin-left: calc(-1 * var(--thumb-size) / 2);
     pointer-events: none;
     transform-origin: center;
     will-change: transform;
@@ -132,10 +130,6 @@ export const sliderStyles = css`
   .slider-container.vertical .slider-thumb {
     left: 50%;
     top: auto;
-    bottom: 0;
-    margin-left: calc(-1 * var(--thumb-size) / 2);
-    margin-bottom: calc(-1 * var(--thumb-size) / 2);
-    margin-top: 0;
   }
 
   input[type="range"] {

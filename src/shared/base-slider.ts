@@ -29,8 +29,8 @@ export class CustomSlider extends HTMLElement {
   private _animId: number | null = null;
   private _posHistory: { x: number; y: number; time: number }[] = [];
 
-  private readonly _friction: number = 0.80; // Increased friction for viscosity
-  private readonly _velocityFactor: number = 10; // Reduced factor for less "slip"
+  private readonly _friction: number = 0.70; // Increased friction for viscosity
+  private readonly _velocityFactor: number = 5; // Reduced factor for less "slip"
   private readonly _minVelocity: number = 0.1;
 
   constructor() {
@@ -302,7 +302,7 @@ export class CustomSlider extends HTMLElement {
 
       fill.style.height = `${percent * 100}%`;
       thumb.style.top = `${thumbPosition}px`;
-      thumb.style.transform = 'translateY(-50%)';
+      thumb.style.transform = 'translateX(-50%) translateY(-50%)';
     } else {
       const trackWidth = track.offsetWidth;
       const effectiveTrackWidth = trackWidth - thumbSize;
@@ -310,7 +310,7 @@ export class CustomSlider extends HTMLElement {
 
       fill.style.width = `${percent * 100}%`;
       thumb.style.left = `${thumbPosition}px`;
-      thumb.style.transform = 'translateX(-50%)';
+      thumb.style.transform = 'translateX(-50%) translateY(-50%)';
     }
     input.value = value.toString();
   }
