@@ -4,6 +4,7 @@ import { BaseCard } from "../shared/base-card";
 import { EntityUtils, ServiceUtils } from "../shared/utils";
 import { sharedStyles } from "../styles/shared";
 import "../shared/base-button";
+import "../shared/base-markdown-card";
 
 class EntityButtonCard extends BaseCard {
   @property() protected _config: any;
@@ -36,8 +37,8 @@ class EntityButtonCard extends BaseCard {
       return html``;
     }
 
-    const title = this._config.title ? html`<h1>${this._config.title}</h1>` : "";
-    const subtitle = this._config.subtitle ? html`<p>${this._config.subtitle}</p>` : "";
+    const title = this._config.title ? html`<base-markdown-card .hass=${this.hass} .content="${this._config.title}"></base-markdown-card>` : "";
+    const subtitle = this._config.subtitle ? html`<base-markdown-card .hass=${this.hass} .content="${this._config.subtitle}"></base-markdown-card>` : "";
 
     return html`
       <style>
