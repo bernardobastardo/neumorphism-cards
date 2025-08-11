@@ -99,7 +99,7 @@ class EntityButtonCard extends BaseCard {
                 </div>
                 <div class="entity-info">
                   <div class="entity-name">${name}</div>
-                  <div class="entity-description">${EntityUtils.processTemplate(description, entityId, this.hass)}</div>
+                  <div class="entity-description"><base-markdown-card .hass=${this.hass} .content="${description}"></base-markdown-card></div>
                 </div>
               </div>
             `;

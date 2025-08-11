@@ -32,42 +32,6 @@ export const EntityUtils = {
         return isOn ? "mdi:flash" : "mdi:flash-outline";
     }
   },
-
-  processTemplate: function (text: string, entity: string, hass: HomeAssistant): string {
-    if (!text || !hass || !hass.states[entity]) {
-      return text;
-    }
-
-    const entityState = hass.states[entity];
-
-    return text.replace(/\\{\\{\\s*([^\\}]+)\\s*\\}\\}/g, (match, expression) => {
-      expression = expression.trim();
-
-      if (expression === "state") {
-        return entityState.state;
-      }
-
-      if (expression.startsWith("attr.")) {
-        const attribute = expression.substring(5);
-        return entityState.attributes[attribute] !== undefined
-          ? entityState.attributes[attribute]
-          : `unknown:${attribute}`;
-      }
-
-      if (expression === "state_with_unit") {
-        const value = entityState.state;
-        const unit = entityState.attributes.unit_of_measurement;
-        return unit ? `${value} ${unit}` : value;
-      }
-
-      if (expression === "last_updated") {
-        const lastChanged = new Date(entityState.last_changed);
-        return lastChanged.toLocaleTimeString();
-      }
-
-      return match;
-    });
-  },
 };
 
 export const ServiceUtils = {
