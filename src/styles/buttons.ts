@@ -1,0 +1,113 @@
+
+import { css } from "lit";
+
+export const buttonStyles = css`
+  .custom-button {
+    background-color: var(--lovelace-background, var(--ha-card-background, var(--card-background-color, white)));
+    border-radius: var(--ha-card-border-radius, 15px);
+    width: 80px;
+    height: 80px;
+    cursor: pointer;
+    border: none;
+    transition: box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out;
+    box-shadow: var(--ha-card-box-shadow, 0px 3px 3px -2px rgba(0, 0, 0, 0.2), 0px 3px 4px 0px rgba(0, 0, 0, 0.14), 0px 1px 8px 0px rgba(0, 0, 0, 0.12));
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  .custom-button.small {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+  }
+
+  .custom-button:hover {
+    box-shadow: var(--shadow-elevation-hover-box, 0px 3px 3px -2px rgba(0, 0, 0, 0.2), 0px 3px 4px 0px rgba(0, 0, 0, 0.14), 0px 1px 8px 0px rgba(0, 0, 0, 0.12));
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .custom-button.active:hover {
+    box-shadow: var(--shadow-elevation-hover-box, inset 0px 2px 4px -1px rgba(0, 0, 0, 0.2), inset 0px 4px 5px 0px rgba(0, 0, 0, 0.14), inset 0px 1px 10px 0px rgba(0, 0, 0, 0.12));
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .custom-button.active {
+    box-shadow: var(--shadow-elevation-pressed-box, inset 0px 2px 4px -1px rgba(0, 0, 0, 0.2), inset 0px 4px 5px 0px rgba(0, 0, 0, 0.14), inset 0px 1px 10px 0px rgba(0, 0, 0, 0.12));
+    background-color: rgba(var(--lovelace-background, 33, 150, 243), 0.2);
+  }
+
+  .custom-button.selected {
+    border: 3px solid var(--primary-text-color);
+    box-shadow: none;
+  }
+
+  .custom-button.unavailable {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .button-icon.active {
+    color: var(--active-icon-color);
+  }
+
+  .button-icon {
+    color: var(--primary-text-color);
+  }
+
+  ha-icon {
+    margin-bottom: 4px;
+    font-size: 16px;
+  }
+
+  .button-content {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .button-name {
+    font-weight: bold;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    color: var(--primary-text-color);
+  }
+
+  :host {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  .card-container,
+  .custom-button,
+  [role="button"],
+  .clickable {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  .card-content {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: pan-y;
+  }
+
+  input,
+  textarea {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+  }
+`;

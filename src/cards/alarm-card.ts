@@ -3,6 +3,8 @@ import { HomeAssistant } from "custom-card-helpers";
 import { BaseCard } from "../shared/base-card";
 import { EntityUtils, ServiceUtils } from "../shared/utils";
 import "../shared/base-button";
+import { sharedStyles } from "../styles/shared";
+import { alarmCardStyles } from "../styles/alarm-card";
 
 class AlarmCard extends BaseCard {
   constructor() {
@@ -74,8 +76,8 @@ class AlarmCard extends BaseCard {
 
     this.shadowRoot.innerHTML = `
       <style>
-        @import "/local/neumorphism-cards/styles/shared.css";
-        @import "/local/neumorphism-cards/styles/alarm-card.css";
+        ${sharedStyles}
+        ${alarmCardStyles}
       </style>
       
       <div class="card-container">

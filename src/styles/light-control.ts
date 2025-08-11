@@ -1,24 +1,29 @@
-.lights-grid {
+
+import { css } from "lit";
+
+export const lightControlStyles = css`
+  .lights-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
     margin-bottom: 24px;
     justify-content: space-between;
-}
+  }
 
-.light-item {
+  .light-item {
     display: flex;
     justify-content: center;
-}
+  }
 
-.light-status {
+  .light-status {
     font-size: 0.75rem;
     color: var(--secondary-text-color);
-}
+  }
 
-.sliders-container {
+  .sliders-container {
     margin-top: 16px;
     display: flex;
     flex-direction: column;
     gap: 16px;
-}
+  }
+`;

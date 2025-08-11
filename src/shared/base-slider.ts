@@ -1,5 +1,7 @@
 
 import { ServiceUtils } from "./utils";
+import { sliderStyles } from "../styles/sliders";
+import { sharedStyles } from "../styles/shared";
 
 export class CustomSlider extends HTMLElement {
   private _value: number = 0;
@@ -409,8 +411,8 @@ export class CustomSlider extends HTMLElement {
 
     const html = `
       <style>
-        @import "/local/neumorphism-cards/styles/sliders.css";
-        @import "/local/neumorphism-cards/styles/shared.css";
+        ${sliderStyles}
+        ${sharedStyles}
       </style>
       
       <div class="slider-container ${orientationClass}">

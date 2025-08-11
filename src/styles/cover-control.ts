@@ -1,43 +1,47 @@
-.container {
+
+import { css } from "lit";
+
+export const coverControlStyles = css`
+  .container {
     display: flex;
     flex-direction: row;
     height: 100%;
-}
+  }
 
-.sliders-container {
+  .sliders-container {
     display: flex;
     flex-direction: column;
     gap: 16px;
     width: 64px;
     margin-right: 16px;
-}
+  }
 
-.vertical-slider {
+  .vertical-slider {
     height: 100px;
     transform: rotate(-90deg);
     transform-origin: center left;
     position: relative;
     left: 32px;
-}
+  }
 
-.controls-grid {
+  .controls-grid {
     display: flex;
     flex-direction: column;
     gap: 12px;
     justify-content: space-between;
-}
+  }
 
-.control-item {
+  .control-item {
     display: flex;
     justify-content: center;
-}
+  }
 
-.control-status {
+  .control-status {
     font-size: 0.75rem;
     color: var(--secondary-text-color);
-}
+  }
 
-.slider-label {
+  .slider-label {
     writing-mode: vertical-lr;
     text-orientation: mixed;
     transform: rotate(180deg);
@@ -45,11 +49,12 @@
     margin-bottom: 8px;
     font-size: 0.75rem;
     color: var(--secondary-text-color);
-}
+  }
 
-.slider-group {
+  .slider-group {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 4px;
-}
+  }
+`;

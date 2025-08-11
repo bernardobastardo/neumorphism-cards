@@ -1,5 +1,6 @@
 
 import { ServiceUtils } from "./utils";
+import { buttonStyles } from "../styles/buttons";
 
 export class BaseButton extends HTMLElement {
   private _icon: string = "mdi:help-circle-outline";
@@ -238,7 +239,7 @@ export class BaseButton extends HTMLElement {
 
     const html = `
       <style>
-        @import "/local/neumorphism-cards/styles/buttons.css";
+        ${buttonStyles}
         
         .custom-button {
           position: relative;

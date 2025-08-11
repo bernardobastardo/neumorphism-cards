@@ -2,6 +2,7 @@
 import { HomeAssistant } from "custom-card-helpers";
 import { BaseCard } from "../shared/base-card";
 import { EntityUtils, ServiceUtils } from "../shared/utils";
+import { sharedStyles } from "../styles/shared";
 
 class EntityButtonCard extends BaseCard {
   constructor() {
@@ -88,7 +89,7 @@ class EntityButtonCard extends BaseCard {
 
     this.shadowRoot.innerHTML = `
       <style>
-        @import "/local/neumorphism-cards/styles/shared.css";
+        ${sharedStyles}
       </style>
       <div class="card-container">
         <div class="card-header">

@@ -4,6 +4,9 @@ import { BaseCard } from "../shared/base-card";
 import { ServiceUtils } from "../shared/utils";
 import "../shared/base-button";
 import "../shared/base-slider";
+import { sharedStyles } from "../styles/shared";
+import { sliderStyles } from "../styles/sliders";
+import { coverControlStyles } from "../styles/cover-control";
 
 interface CoverEntityPair {
   name: string;
@@ -181,9 +184,9 @@ class BlindCurtainControlCard extends BaseCard {
 
     this.shadowRoot.innerHTML = `
       <style>
-        @import "/local/neumorphism-cards/styles/shared.css";
-        @import "/local/neumorphism-cards/styles/sliders.css";
-        @import "/local/neumorphism-cards/styles/cover-control.css";
+        ${sharedStyles}
+        ${sliderStyles}
+        ${coverControlStyles}
       </style>
       
       <div class="card-container">

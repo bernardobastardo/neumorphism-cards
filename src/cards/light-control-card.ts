@@ -4,6 +4,8 @@ import { BaseCard } from "../shared/base-card";
 import { ServiceUtils } from "../shared/utils";
 import "../shared/base-button";
 import "../shared/base-slider";
+import { sharedStyles } from "../styles/shared";
+import { lightControlStyles } from "../styles/light-control";
 
 class LightControlCard extends BaseCard {
   private _selectedEntity: string | null = null;
@@ -168,8 +170,8 @@ class LightControlCard extends BaseCard {
 
     this.shadowRoot.innerHTML = `
       <style>
-        @import "/local/neumorphism-cards/styles/shared.css";
-        @import "/local/neumorphism-cards/styles/light-control.css";
+        ${sharedStyles}
+        ${lightControlStyles}
       </style>
       
       <div class="card-container">
