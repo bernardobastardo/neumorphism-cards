@@ -106,18 +106,11 @@ export class CustomSlider extends HTMLElement {
     const track = this.shadowRoot?.querySelector(".slider-track");
     if (!track) return;
 
-    const newValue = this._calculateValueFromPosition(x, y);
-
     track.classList.add("is-pressing");
-    this._updateVisuals(newValue);
+    this._updateVisuals(this._calculateValueFromPosition(x, y));
 
     this._pressTimeout = window.setTimeout(() => {
       this._isReadyToDrag = true;
-      if (!this._initialMoveHappened) {
-        this._value = newValue;
-        this._emitEvent("change");
-      }
-      track.classList.remove("is-pressing");
       this._pressTimeout = null;
     }, 200);
 
@@ -134,21 +127,18 @@ export class CustomSlider extends HTMLElement {
     const x = type === "mouse" ? (e as MouseEvent).clientX : (e as TouchEvent).touches[0].clientX;
     const y = type === "mouse" ? (e as MouseEvent).clientY : (e as TouchEvent).touches[0].clientY;
 
-    if (type === "touch") {
-      if (this._isScrollGesture) return;
+    if (!this._initialMoveHappened) {
+      const deltaX = Math.abs(x - this._startX);
+      const deltaY = Math.abs(y - this._startY);
 
-      if (!this._initialMoveHappened) {
-        const deltaX = Math.abs(x - this._startX);
-        const deltaY = Math.abs(y - this._startY);
-
-        if (deltaX > this._dragThreshold || deltaY > this._dragThreshold) {
+      if (deltaX > this._dragThreshold || deltaY > this._dragThreshold) {
+        this._initialMoveHappened = true;
+        if (type === 'touch') {
           const isScrolling = (this._orientation === 'horizontal' && deltaY > deltaX) || 
                               (this._orientation === 'vertical' && deltaX > deltaY);
 
           if (isScrolling) {
             this._isScrollGesture = true;
-            this._initialMoveHappened = true;
-            
             if (this._pressTimeout) {
               clearTimeout(this._pressTimeout);
               this._pressTimeout = null;
@@ -157,26 +147,19 @@ export class CustomSlider extends HTMLElement {
             this._updateVisuals(this._value);
             return;
           }
-          this._initialMoveHappened = true;
-        } else {
-          return;
         }
       }
     }
 
-    if (!this._isReadyToDrag) {
-      if (this._pressTimeout) {
-        this._initialMoveHappened = true;
-      }
-      return;
-    }
-    
-    if (type === "touch") e.preventDefault();
+    if (this._isScrollGesture) return;
 
-    this._addPositionToHistory(x, y);
-    this._value = this._calculateValueFromPosition(x, y);
-    this._updateVisuals(this._value);
-    this._emitEvent("input");
+    if (this._isReadyToDrag) {
+      if (type === "touch") e.preventDefault();
+      this._addPositionToHistory(x, y);
+      this._value = this._calculateValueFromPosition(x, y);
+      this._updateVisuals(this._value);
+      this._emitEvent("input");
+    }
   }
 
   private _onEnd(type: "mouse" | "touch", e: MouseEvent | TouchEvent) {
@@ -188,10 +171,14 @@ export class CustomSlider extends HTMLElement {
     if (this._pressTimeout) {
       clearTimeout(this._pressTimeout);
       this._pressTimeout = null;
-      const x = type === "mouse" ? (e as MouseEvent).clientX : (e as TouchEvent).changedTouches[0].clientX;
-      const y = type === "mouse" ? (e as MouseEvent).clientY : (e as TouchEvent).changedTouches[0].clientY;
-      this._value = this._calculateValueFromPosition(x, y);
-      this._emitEvent("change");
+      if (!this._initialMoveHappened && !this._isScrollGesture) {
+        const x = type === "mouse" ? (e as MouseEvent).clientX : (e as TouchEvent).changedTouches[0].clientX;
+        const y = type === "mouse" ? (e as MouseEvent).clientY : (e as TouchEvent).changedTouches[0].clientY;
+        this._value = this._calculateValueFromPosition(x, y);
+        this._emitEvent("change");
+      } else {
+        this._updateVisuals(this._value);
+      }
     } else if (!this._isScrollGesture) {
       this._calculateFinalVelocity();
       const velocity = this._orientation === 'vertical' ? Math.abs(this._velocityY) : Math.abs(this._velocityX);
