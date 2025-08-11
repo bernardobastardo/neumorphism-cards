@@ -102,7 +102,10 @@ export const sliderStyles = css`
     height: 100%;
     background-color: rgba(var(--rgb-primary-text-color, 33, 150, 243), 0.2);
     pointer-events: none;
-    transition: none;
+  }
+
+  .is-pressing .slider-fill {
+    transition: width 0.2s ease-out, height 0.2s ease-out;
   }
 
   .slider-thumb {
@@ -119,8 +122,11 @@ export const sliderStyles = css`
     pointer-events: none;
     transform-origin: center;
     will-change: transform;
-    transition: none;
     z-index: 2;
+  }
+
+  .is-pressing .slider-thumb {
+    transition: left 0.2s ease-out, top 0.2s ease-out;
   }
 
   .slider-container.vertical .slider-thumb {

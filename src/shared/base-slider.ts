@@ -14,6 +14,11 @@ export class CustomSlider extends HTMLElement {
   private _showThumb: boolean = true;
 
   private _isDragging: boolean = false;
+  private _isScrollGesture: boolean = false;
+  private _initialMoveHappened: boolean = false;
+  private readonly _dragThreshold: number = 10;
+  private _pressTimeout: number | null = null;
+
   private _startX: number = 0;
   private _startY: number = 0;
   private _lastX: number = 0;
@@ -24,9 +29,9 @@ export class CustomSlider extends HTMLElement {
   private _animId: number | null = null;
   private _posHistory: { x: number; y: number; time: number }[] = [];
 
-  private readonly _friction: number = 0.85;
-  private readonly _velocityFactor: number = 15;
-  private readonly _minVelocity: number = 1;
+  private readonly _friction: number = 0.80; // Increased friction for viscosity
+  private readonly _velocityFactor: number = 10; // Reduced factor for less "slip"
+  private readonly _minVelocity: number = 0.1;
 
   constructor() {
     super();
@@ -49,10 +54,6 @@ export class CustomSlider extends HTMLElement {
 
   disconnectedCallback() {
     this._cleanupEvents();
-    if (this._animId) {
-      cancelAnimationFrame(this._animId);
-      this._animId = null;
-    }
   }
 
   private _handleMouseDown: (e: MouseEvent) => void;
@@ -68,6 +69,10 @@ export class CustomSlider extends HTMLElement {
     document.removeEventListener("touchmove", this._handleTouchMove);
     document.removeEventListener("touchend", this._handleTouchEnd);
     document.removeEventListener("touchcancel", this._handleTouchEnd);
+    if (this._pressTimeout) {
+      clearTimeout(this._pressTimeout);
+      this._pressTimeout = null;
+    }
   }
 
   private _setupEvents() {
@@ -83,45 +88,34 @@ export class CustomSlider extends HTMLElement {
 
     track.addEventListener("mousedown", this._handleMouseDown);
     track.addEventListener("touchstart", this._handleTouchStart, { passive: false });
-
-    const input = this.shadowRoot?.querySelector("input");
-    if (input) {
-      input.addEventListener("input", (e) => {
-        this._value = parseFloat((e.target as HTMLInputElement).value);
-        this._updateVisuals();
-        this._emitEvent("input");
-      });
-    }
   }
 
   private _onStart(type: "mouse" | "touch", e: MouseEvent | TouchEvent) {
     if (this._disabled) return;
 
-    if (type === "touch") {
-      e.preventDefault();
-    }
-
     const x = type === "mouse" ? (e as MouseEvent).clientX : (e as TouchEvent).touches[0].clientX;
     const y = type === "mouse" ? (e as MouseEvent).clientY : (e as TouchEvent).touches[0].clientY;
 
     this._isDragging = true;
+    this._isScrollGesture = false;
+    this._initialMoveHappened = false;
     this._startX = x;
     this._startY = y;
-    this._lastX = x;
-    this._lastY = y;
-    this._lastTime = Date.now();
-    this._velocityX = 0;
-    this._velocityY = 0;
-    this._posHistory = [];
 
-    this._addPositionToHistory(x, y);
+    const track = this.shadowRoot?.querySelector(".slider-track");
+    if (!track) return;
 
-    if (this._animId) {
-      cancelAnimationFrame(this._animId);
-      this._animId = null;
-    }
+    const newValue = this._calculateValueFromPosition(x, y);
 
-    this._updateValueFromPosition(x, y);
+    track.classList.add("is-pressing");
+    this._updateVisuals(newValue);
+
+    this._pressTimeout = window.setTimeout(() => {
+      this._value = newValue;
+      this._emitEvent("change");
+      track.classList.remove("is-pressing");
+      this._pressTimeout = null;
+    }, 200);
 
     document.addEventListener("mousemove", this._handleMouseMove);
     document.addEventListener("mouseup", this._handleMouseUp);
@@ -133,35 +127,79 @@ export class CustomSlider extends HTMLElement {
   private _onMove(type: "mouse" | "touch", e: MouseEvent | TouchEvent) {
     if (!this._isDragging) return;
 
-    if (type === "touch") {
-      e.preventDefault();
-    }
-
     const x = type === "mouse" ? (e as MouseEvent).clientX : (e as TouchEvent).touches[0].clientX;
     const y = type === "mouse" ? (e as MouseEvent).clientY : (e as TouchEvent).touches[0].clientY;
-    const now = Date.now();
+
+    if (type === "touch") {
+      if (this._isScrollGesture) return;
+
+      if (!this._initialMoveHappened) {
+        const deltaX = Math.abs(x - this._startX);
+        const deltaY = Math.abs(y - this._startY);
+
+        if (deltaX > this._dragThreshold || deltaY > this._dragThreshold) {
+          const isScrolling = (this._orientation === 'horizontal' && deltaY > deltaX) || 
+                              (this._orientation === 'vertical' && deltaX > deltaY);
+
+          if (isScrolling) {
+            this._isScrollGesture = true;
+            this._initialMoveHappened = true;
+            
+            if (this._pressTimeout) {
+              clearTimeout(this._pressTimeout);
+              this._pressTimeout = null;
+            }
+            this.shadowRoot?.querySelector(".slider-track")?.classList.remove("is-pressing");
+            this._updateVisuals(this._value);
+            return;
+          }
+          this._initialMoveHappened = true;
+        } else {
+          return;
+        }
+      }
+    }
+
+    if (this._pressTimeout) {
+      clearTimeout(this._pressTimeout);
+      this._pressTimeout = null;
+      this.shadowRoot?.querySelector(".slider-track")?.classList.remove("is-pressing");
+    }
+    
+    if (type === "touch") e.preventDefault();
 
     this._addPositionToHistory(x, y);
-    this._updateValueFromPosition(x, y);
-
-    this._lastX = x;
-    this._lastY = y;
-    this._lastTime = now;
+    this._value = this._calculateValueFromPosition(x, y);
+    this._updateVisuals(this._value);
+    this._emitEvent("input");
   }
 
   private _onEnd(type: "mouse" | "touch", e: MouseEvent | TouchEvent) {
     if (!this._isDragging) return;
 
-    this._isDragging = false;
-    this._calculateFinalVelocity();
+    const track = this.shadowRoot?.querySelector(".slider-track");
+    track?.classList.remove("is-pressing");
 
-    const velocity = this._orientation === "vertical" ? Math.abs(this._velocityY) : Math.abs(this._velocityX);
-
-    if (velocity > 0.5) {
-      this._animateInertia();
-    } else {
+    if (this._pressTimeout) {
+      clearTimeout(this._pressTimeout);
+      this._pressTimeout = null;
+      const x = type === "mouse" ? (e as MouseEvent).clientX : (e as TouchEvent).changedTouches[0].clientX;
+      const y = type === "mouse" ? (e as MouseEvent).clientY : (e as TouchEvent).changedTouches[0].clientY;
+      this._value = this._calculateValueFromPosition(x, y);
       this._emitEvent("change");
+    } else if (!this._isScrollGesture) {
+      this._calculateFinalVelocity();
+      const velocity = this._orientation === 'vertical' ? Math.abs(this._velocityY) : Math.abs(this._velocityX);
+      if (velocity > this._minVelocity) {
+        this._animateInertia();
+      } else {
+        this._emitEvent("change");
+      }
     }
+
+    this._isDragging = false;
+    this._isScrollGesture = false;
+    this._initialMoveHappened = false;
 
     this._cleanupEvents();
   }
@@ -180,30 +218,23 @@ export class CustomSlider extends HTMLElement {
       this._velocityY = 0;
       return;
     }
-
     const newest = this._posHistory[this._posHistory.length - 1];
     const oldest = this._posHistory[0];
-
     const deltaX = newest.x - oldest.x;
     const deltaY = newest.y - oldest.y;
     const deltaTime = newest.time - oldest.time;
-
     if (deltaTime <= 0) {
       this._velocityX = 0;
       this._velocityY = 0;
       return;
     }
-
     this._velocityX = (deltaX / deltaTime) * this._velocityFactor;
     this._velocityY = (deltaY / deltaTime) * this._velocityFactor;
   }
 
   private _animateInertia() {
-    const velocity = this._orientation === "vertical" ? this._velocityY : this._velocityX;
-
+    const velocity = this._orientation === 'vertical' ? this._velocityY : this._velocityX;
     if (Math.abs(velocity) < this._minVelocity) {
-      this._velocityX = 0;
-      this._velocityY = 0;
       this._emitEvent("change");
       return;
     }
@@ -211,126 +242,77 @@ export class CustomSlider extends HTMLElement {
     this._velocityX *= this._friction;
     this._velocityY *= this._friction;
 
-    const track = this.shadowRoot?.querySelector(".slider-track");
-    if (track) {
-      const trackRect = track.getBoundingClientRect();
-      const thumb = this.shadowRoot?.querySelector(".slider-thumb") as HTMLElement;
-      const thumbSize = thumb ? parseInt(getComputedStyle(thumb).width) || 14 : 14;
+    const valueChange = this._orientation === 'vertical' ? -this._velocityY : this._velocityX;
+    const newValue = this._value + valueChange;
+    this._value = Math.round(Math.max(this._min, Math.min(this._max, newValue)));
+    
+    this._updateVisuals(this._value);
+    this._emitEvent("input");
 
-      if (this._orientation === "vertical") {
-        const effectiveHeight = trackRect.height - thumbSize;
-        const pixelsPerValue = effectiveHeight / (this._max - this._min);
-        const valueChange = -this._velocityY / pixelsPerValue;
-        const newValue = this._value + valueChange;
-        const prevValue = this._value;
-        this._value = Math.max(this._min, Math.min(this._max, newValue));
-        const hitMin = this._value === this._min && prevValue !== this._min && valueChange < 0;
-        const hitMax = this._value === this._max && prevValue !== this._max && valueChange > 0;
-        if (hitMin || hitMax) {
-          this._velocityY = 0;
-          this._updateVisuals();
-          this._emitEvent("change");
-          return;
-        }
-      } else {
-        const effectiveWidth = trackRect.width - thumbSize;
-        const pixelsPerValue = effectiveWidth / (this._max - this._min);
-        const valueChange = this._velocityX / pixelsPerValue;
-        const newValue = this._value + valueChange;
-        const prevValue = this._value;
-        this._value = Math.max(this._min, Math.min(this._max, newValue));
-        const hitMin = this._value === this._min && prevValue !== this._min && valueChange < 0;
-        const hitMax = this._value === this._max && prevValue !== this._max && valueChange > 0;
-        if (hitMin || hitMax) {
-          this._velocityX = 0;
-          this._updateVisuals();
-          this._emitEvent("change");
-          return;
-        }
-      }
-      this._updateVisuals();
-      this._emitEvent("input");
+    if (this._value === this._min || this._value === this._max) {
+      this._emitEvent("change");
+      return;
     }
+
     this._animId = requestAnimationFrame(() => this._animateInertia());
   }
 
-  private _updateValueFromPosition(x: number, y: number) {
-    const track = this.shadowRoot?.querySelector(".slider-track");
-    if (!track) return;
+  private _calculateValueFromPosition(x: number, y: number): number {
+    const track = this.shadowRoot?.querySelector(".slider-track") as HTMLElement;
+    if (!track) return this._value;
 
     const trackRect = track.getBoundingClientRect();
     const thumb = this.shadowRoot?.querySelector(".slider-thumb") as HTMLElement;
-    const thumbSize = thumb ? parseInt(getComputedStyle(thumb).width) || 14 : 14;
+    const thumbSize = thumb ? thumb.offsetWidth : 0;
+    let ratio = 0;
 
     if (this._orientation === "vertical") {
       const effectiveTop = trackRect.top + thumbSize / 2;
       const effectiveHeight = trackRect.height - thumbSize;
+      if (effectiveHeight <= 0) return this._value;
       const relativeY = y - effectiveTop;
-      const ratio = relativeY / effectiveHeight;
-      const constrainedRatio = Math.max(0, Math.min(1, ratio));
-      this._value = Math.round(this._min + constrainedRatio * (this._max - this._min));
+      ratio = relativeY / effectiveHeight;
     } else {
       const effectiveLeft = trackRect.left + thumbSize / 2;
       const effectiveWidth = trackRect.width - thumbSize;
+      if (effectiveWidth <= 0) return this._value;
       const relativeX = x - effectiveLeft;
-      const ratio = relativeX / effectiveWidth;
-      const constrainedRatio = Math.max(0, Math.min(1, ratio));
-      this._value = Math.round(this._min + constrainedRatio * (this._max - this._min));
+      ratio = relativeX / effectiveWidth;
     }
 
-    this._updateVisuals();
-    this._emitEvent("input");
+    const constrainedRatio = Math.max(0, Math.min(1, ratio));
+    return Math.round(this._min + constrainedRatio * (this._max - this._min));
   }
 
-  private _updateVisuals() {
+  private _updateVisuals(value: number) {
     const thumb = this.shadowRoot?.querySelector(".slider-thumb") as HTMLElement;
     const fill = this.shadowRoot?.querySelector(".slider-fill") as HTMLElement;
-    const track = this.shadowRoot?.querySelector(".slider-track");
+    const track = this.shadowRoot?.querySelector(".slider-track") as HTMLElement;
     const input = this.shadowRoot?.querySelector("input");
 
-    if (!track) return;
+    if (!thumb || !fill || !track || !input) return;
 
-    const percent = (this._value - this._min) / (this._max - this._min);
+    const percent = (value - this._min) / (this._max - this._min);
+    const thumbSize = thumb.offsetWidth;
 
     if (this._orientation === "vertical") {
-      if (fill) {
-        fill.style.height = `${percent * 100}%`;
-        fill.style.width = "100%";
-        fill.style.top = "0";
-        fill.style.bottom = "auto";
-      }
-      if (thumb) {
-        const thumbSize = parseInt(getComputedStyle(thumb).width) || 14;
-        const trackHeight = (track as HTMLElement).offsetHeight;
-        const effectiveTrackHeight = trackHeight - thumbSize;
-        const thumbPosition = thumbSize / 2 + percent * effectiveTrackHeight;
-        thumb.style.top = `${thumbPosition}px`;
-        thumb.style.bottom = "auto";
-        thumb.style.left = "50%";
-        thumb.style.transform = "translateY(-50%)";
-      }
-    } else {
-      if (fill) {
-        fill.style.width = `${percent * 100}%`;
-        fill.style.height = "100%";
-        fill.style.top = "0";
-        fill.style.bottom = "auto";
-      }
-      if (thumb) {
-        const thumbSize = parseInt(getComputedStyle(thumb).width) || 14;
-        const trackWidth = (track as HTMLElement).offsetWidth;
-        const effectiveTrackWidth = trackWidth - thumbSize;
-        const thumbPosition = thumbSize + percent * effectiveTrackWidth;
-        thumb.style.top = "50%";
-        thumb.style.bottom = "auto";
-        thumb.style.left = `${thumbPosition}px`;
-        thumb.style.transform = "translateX(-50%)";
-      }
-    }
+      const trackHeight = track.offsetHeight;
+      const effectiveTrackHeight = trackHeight - thumbSize;
+      const thumbPosition = (thumbSize / 2) + (percent * effectiveTrackHeight);
 
-    if (input) {
-      input.value = this._value.toString();
+      fill.style.height = `${percent * 100}%`;
+      thumb.style.top = `${thumbPosition}px`;
+      thumb.style.transform = 'translateY(-50%)';
+    } else {
+      const trackWidth = track.offsetWidth;
+      const effectiveTrackWidth = trackWidth - thumbSize;
+      const thumbPosition = (thumbSize / 2) + (percent * effectiveTrackWidth);
+
+      fill.style.width = `${percent * 100}%`;
+      thumb.style.left = `${thumbPosition}px`;
+      thumb.style.transform = 'translateX(-50%)';
     }
+    input.value = value.toString();
   }
 
   private _emitEvent(type: "input" | "change") {
@@ -346,27 +328,9 @@ export class CustomSlider extends HTMLElement {
   }
 
   set value(val: number) {
+    if (this._value === val) return;
     this._value = Math.max(this._min, Math.min(this._max, val || 0));
-    this._updateVisuals();
-  }
-
-  get disabled(): boolean {
-    return this._disabled;
-  }
-
-  set disabled(val: boolean) {
-    this._disabled = val;
-    this.toggleAttribute("disabled", this._disabled);
-  }
-
-  get orientation(): "horizontal" | "vertical" {
-    return this._orientation;
-  }
-
-  set orientation(val: "horizontal" | "vertical") {
-    this._orientation = val;
-    this.setAttribute("orientation", this._orientation);
-    this.render();
+    this._updateVisuals(this._value);
   }
 
   static get observedAttributes() {
@@ -378,7 +342,7 @@ export class CustomSlider extends HTMLElement {
 
     switch (name) {
       case "value":
-        this._value = parseFloat(newValue) || 0;
+        this.value = parseFloat(newValue) || 0;
         break;
       case "min":
         this._min = parseFloat(newValue) || 0;
@@ -402,7 +366,6 @@ export class CustomSlider extends HTMLElement {
         this._orientation = (newValue as "vertical" | "horizontal") || "horizontal";
         break;
     }
-
     this.render();
   }
 
@@ -418,10 +381,10 @@ export class CustomSlider extends HTMLElement {
       <div class="slider-container ${orientationClass}">
         ${this._label ? `<div class="custom-label">${this._label}</div>` : ""}
         <div class="slider-wrapper">
-          <div class="slider-track ${this._disabled ? "disabled" : ""} ${orientationClass}">
+          <div class="slider-track ${this._disabled ? "disabled" : ""}">
             ${this._showFill ? `<div class="slider-fill"></div>` : ""}
             <input type="range" min="${this._min}" max="${this._max}" .value="${this._value}" 
-              ?disabled="${this._disabled}">
+              ?disabled="${this._disabled}" style="display: none;">
             ${this._showThumb ? `<div class="slider-thumb"></div>` : ""}
           </div>
         </div>
@@ -433,7 +396,7 @@ export class CustomSlider extends HTMLElement {
     }
 
     this._setupEvents();
-    requestAnimationFrame(() => this._updateVisuals());
+    requestAnimationFrame(() => this._updateVisuals(this._value));
   }
 }
 

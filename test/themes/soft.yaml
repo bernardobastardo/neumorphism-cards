@@ -20,16 +20,16 @@ Soft UI:
   paper-item-icon-color: var(--secondary-text-color)
   modes:
     dark:
-      primary-color: "#4C3FF9"
-      light-primary-color: "#7A71FB"
-      primary-background-color: "#222222"
-      primary-text-color: "#F7F8F9"
-      ha-card-box-shadow: "-5px -5px 15px #2c2c2c, 5px 5px 15px #191919"
-      soft-ui-pressed: "inset -4px -4px 5px #2c2c2c, inset 4px 4px 5px #191919"
+      primary-color: "#2A593E"
+      light-primary-color: "#e0e0e0"
+      primary-background-color: "#171717"
+      primary-text-color: "#e0e0e0"
+      ha-card-box-shadow: "9px 9px 19px #0d0d0d,  -9px -9px 19px #212121"
+      soft-ui-pressed: " inset 9px 9px 19px #0d0d0d,  inset -9px -9px 19px #212121"
     light:
-      primary-color: "#7A71FB"
-      light-primary-color: "#918AFC"
-      primary-background-color: "#F3F5F7"
-      primary-text-color: "#222222"
-      ha-card-box-shadow: "-5px -5px 15px #ffffff, 5px 5px 15px #ebebeb"
-      soft-ui-pressed: "inset -4px -4px 5px #ffffff, inset 4px 4px 5px #ebebeb"
+      primary-color: "#2A593E"
+      light-primary-color: "#9CA6A0"
+      primary-background-color: "#e0e0e0"
+      primary-text-color: "#171717"
+      ha-card-box-shadow: "9px 9px 19px #acacac, -9px -9px 19px #ffffff"
+      soft-ui-pressed: "inset 9px 9px 19px #acacac,  inset -9px -9px 19px #ffffff;"

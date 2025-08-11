@@ -48,20 +48,23 @@ class LightControlCard extends BaseCard {
     if (!this._selectedEntity || !this.hass) return 50;
     const state = this.hass.states[this._selectedEntity];
     if (!state || state.state === "off") return 50;
+
     if (state.attributes.kelvin) {
-      const minTemp = 2000;
-      const maxTemp = 6500;
-      const range = maxTemp - minTemp;
-      const kelvin = state.attributes.kelvin || 3500;
-      return 100 - Math.round(((kelvin - minTemp) / range) * 100);
+      const minKelvin = state.attributes.min_kelvin || 2000;
+      const maxKelvin = state.attributes.max_kelvin || 6500;
+      const range = maxKelvin - minKelvin;
+      const kelvin = state.attributes.kelvin;
+      return Math.round(((kelvin - minKelvin) / range) * 100);
     }
+
     if (state.attributes.color_temp) {
       const minMireds = state.attributes.min_mireds || 153;
       const maxMireds = state.attributes.max_mireds || 500;
       const range = maxMireds - minMireds;
       const mireds = state.attributes.color_temp;
-      return Math.round(((mireds - minMireds) / range) * 100);
+      return Math.round(((maxMireds - mireds) / range) * 100);
     }
+
     return 50;
   }
 
@@ -83,7 +86,26 @@ class LightControlCard extends BaseCard {
 
   private _setColorTemp(ev: any) {
     if (!this._selectedEntity || !this.hass) return;
-    ServiceUtils.setColorTemp(this.hass, this._selectedEntity, ev.detail.value);
+
+    const state = this.hass.states[this._selectedEntity];
+    if (!state) return;
+
+    const sliderValue = ev.detail.value;
+    let serviceData: { entity_id: string; kelvin?: number; color_temp?: number } = { entity_id: this._selectedEntity };
+
+    if (state.attributes.supported_color_modes.includes("kelvin")) {
+      const minKelvin = state.attributes.min_kelvin || 2000;
+      const maxKelvin = state.attributes.max_kelvin || 6500;
+      const range = maxKelvin - minKelvin;
+      serviceData.kelvin = Math.round(minKelvin + (sliderValue / 100) * range);
+    } else if (state.attributes.supported_color_modes.includes("color_temp")) {
+      const minMireds = state.attributes.min_mireds || 153;
+      const maxMireds = state.attributes.max_mireds || 500;
+      const range = maxMireds - minMireds;
+      serviceData.color_temp = Math.round(maxMireds - (sliderValue / 100) * range);
+    }
+
+    this.hass.callService("light", "turn_on", serviceData);
   }
 
   private _handleToggle(entityId: string) {
@@ -151,7 +173,7 @@ class LightControlCard extends BaseCard {
           ></custom-slider>
           
           <custom-slider
-            show-fill="false"
+            show-fill="true"
             show-thumb="true"
             show-border="true"
             label="Temperature"
