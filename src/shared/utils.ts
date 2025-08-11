@@ -97,9 +97,4 @@ export const ServiceUtils = {
     });
     node.dispatchEvent(event);
   },
-
-  toggle: function (node: any, entityId: string): void {
-    const domain = entityId.split(".")[0];
-    node._hass.callService(domain, "toggle", { entity_id: entityId });
-  },
 };

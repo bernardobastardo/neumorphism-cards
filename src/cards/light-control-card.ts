@@ -86,6 +86,11 @@ class LightControlCard extends BaseCard {
     ServiceUtils.setColorTemp(this.hass, this._selectedEntity, ev.detail.value);
   }
 
+  private _handleToggle(entityId: string) {
+    if (!this.hass) return;
+    this.hass.callService("light", "toggle", { entity_id: entityId });
+  }
+
   protected render(): TemplateResult {
     if (!this.hass || !this._config) {
       return html``;
@@ -121,7 +126,7 @@ class LightControlCard extends BaseCard {
                   .name=${name}
                   .entity=${entityId}
                   @button-click=${() => this._selectEntity(entityId)}
-                  @button-double-click=${() => ServiceUtils.toggle(this, entityId)}
+                  @button-double-click=${() => this._handleToggle(entityId)}
                   @button-long-press=${() => ServiceUtils.showMoreInfo(this, entityId)}
                   @button-right-click=${() => ServiceUtils.showMoreInfo(this, entityId)}
                 >
