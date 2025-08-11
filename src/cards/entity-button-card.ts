@@ -37,12 +37,21 @@ class EntityButtonCard extends BaseCard {
       return html``;
     }
 
-    const title = this._config.title ? html`<base-markdown-card .hass=${this.hass} .content="${this._config.title}"></base-markdown-card>` : "";
-    const subtitle = this._config.subtitle ? html`<base-markdown-card .hass=${this.hass} .content="${this._config.subtitle}"></base-markdown-card>` : "";
+    const title = this._config.title ? html`<div class="title"><base-markdown-card .hass=${this.hass} .content="${this._config.title}"></base-markdown-card></div>` : "";
+    const subtitle = this._config.subtitle ? html`<div class="subtitle"><base-markdown-card .hass=${this.hass} .content="${this._config.subtitle}"></base-markdown-card></div>` : "";
 
     return html`
       <style>
         ${sharedStyles}
+        .title {
+          font-size: 1.2em;
+          font-weight: bold;
+          margin-bottom: 4px;
+        }
+        .subtitle {
+          font-size: 0.9em;
+          color: var(--secondary-text-color);
+        }
       </style>
       <div class="card-container">
         <div class="card-header">
