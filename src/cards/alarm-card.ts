@@ -4,6 +4,7 @@ import { HomeAssistant } from "custom-card-helpers";
 import { BaseCard } from "../shared/base-card";
 import { EntityUtils, ServiceUtils } from "../shared/utils";
 import "../shared/base-button";
+import "../shared/card-header";
 import { sharedStyles } from "../styles/shared";
 import { alarmCardStyles } from "../styles/alarm-card";
 
@@ -68,9 +69,6 @@ class AlarmCard extends BaseCard {
     const rightActive = rightEntityState ? EntityUtils.isEntityActive(rightEntityState) : false;
     const formattedTime = this._formatTime(datetimeState);
 
-    const title = this._config.title ? html`<h1>${this._config.title}</h1>` : "";
-    const subtitle = this._config.subtitle ? html`<p>${this._config.subtitle}</p>` : "";
-
     return html`
       <style>
         ${sharedStyles}
@@ -79,8 +77,7 @@ class AlarmCard extends BaseCard {
       
       <div class="card-container">
         <div class="card-header">
-          ${title}
-          ${subtitle}
+          <card-header .hass=${this.hass} .title=${this._config.title} .subtitle=${this._config.subtitle}></card-header>
         </div>
         
         <div class="alarm-card-container">

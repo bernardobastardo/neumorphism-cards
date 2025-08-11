@@ -4,6 +4,7 @@ import { HomeAssistant } from "custom-card-helpers";
 import { BaseCard } from "../shared/base-card";
 import { ServiceUtils } from "../shared/utils";
 import "../shared/base-button";
+import "../shared/card-header";
 import { sharedStyles } from "../styles/shared";
 import { mediaPlayerStyles } from "../styles/media-player";
 
@@ -116,9 +117,6 @@ class MediaPlayerCard extends BaseCard {
     const currentSource = isOn ? state.attributes.source || "" : "";
     const sourceList = isOn && state.attributes.source_list ? state.attributes.source_list : [];
 
-    const title = this._config.title ? html`<h1>${this._config.title}</h1>` : "";
-    const subtitle = this._config.subtitle ? html`<p>${this._config.subtitle}</p>` : "";
-
     return html`
       <style>
         ${sharedStyles}
@@ -127,8 +125,7 @@ class MediaPlayerCard extends BaseCard {
       
       <div class="card-container">
         <div class="card-header">
-          ${title}
-          ${subtitle}
+          <card-header .hass=${this.hass} .title=${this._config.title} .subtitle=${this._config.subtitle}></card-header>
         </div>
         
         <div class="media-card-container ${containerClass}">
