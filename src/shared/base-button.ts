@@ -1,15 +1,18 @@
-
+import { LitElement, html, TemplateResult } from "lit";
+import { property, state } from "lit/decorators.js";
 import { ServiceUtils } from "./utils";
 import { buttonStyles } from "../styles/buttons";
 
-export class BaseButton extends HTMLElement {
-  private _icon: string = "mdi:help-circle-outline";
-  private _active: boolean = false;
-  private _selected: boolean = false;
-  private _disabled: boolean = false;
-  private _small: boolean = false;
-  private _name: string = "";
-  private _entity: string = "";
+export class BaseButton extends LitElement {
+  @property() icon: string = "mdi:help-circle-outline";
+  @property({ type: Boolean }) active: boolean = false;
+  @property({ type: Boolean }) selected: boolean = false;
+  @property({ type: Boolean }) disabled: boolean = false;
+  @property({ type: Boolean }) small: boolean = false;
+  @property() name: string = "";
+  @property() entity: string = "";
+
+  @state() private _isPressed: boolean = false;
 
   private _lastTapTime: number = 0;
   private _longPressTimer: number | null = null;
@@ -19,27 +22,9 @@ export class BaseButton extends HTMLElement {
   private readonly _doubleClickDelay: number = 200;
   private readonly _longPressDelay: number = 500;
 
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-  }
-
-  connectedCallback() {
-    this._icon = this.getAttribute("icon") || "mdi:help-circle-outline";
-    this._active = this.hasAttribute("active") && this.getAttribute("active") !== "false";
-    this._selected = this.hasAttribute("selected") && this.getAttribute("selected") !== "false";
-    this._disabled = this.hasAttribute("disabled") && this.getAttribute("disabled") !== "false";
-    this._name = this.getAttribute("name") || "";
-    this._small = this.hasAttribute("small");
-    this._entity = this.getAttribute("data-entity") || "";
-
-    this.render();
-    this._setupEvents();
-  }
-
   disconnectedCallback() {
+    super.disconnectedCallback();
     this._clearAllTimers();
-    this._removeEvents();
   }
 
   private _clearAllTimers() {
@@ -53,92 +38,36 @@ export class BaseButton extends HTMLElement {
     }
   }
 
-  private _removeEvents() {
-    const button = this.shadowRoot?.querySelector("button");
-    if (!button) return;
-
-    button.removeEventListener("mousedown", this._handleStart);
-    button.removeEventListener("mouseup", this._handleEnd);
-    button.removeEventListener("mouseleave", this._handleCancel);
-    button.removeEventListener("click", this._handleClick);
-    button.removeEventListener("contextmenu", this._handleContextMenu);
-    button.removeEventListener("touchstart", this._handleStart);
-    button.removeEventListener("touchend", this._handleEnd);
-    button.removeEventListener("touchcancel", this._handleCancel);
-  }
-
-  private _handleStart: (e: Event) => void;
-  private _handleEnd: (e: Event) => void;
-  private _handleCancel: (e: Event) => void;
-  private _handleClick: (e: Event) => void;
-  private _handleContextMenu: (e: Event) => void;
-
-  private _setupEvents() {
-    const button = this.shadowRoot?.querySelector("button");
-    if (!button) return;
-
-    this._handleStart = this._onInteractionStart.bind(this);
-    this._handleEnd = this._onInteractionEnd.bind(this);
-    this._handleCancel = this._onInteractionCancel.bind(this);
-    this._handleClick = this._onClick.bind(this);
-    this._handleContextMenu = this._onContextMenu.bind(this);
-
-    button.addEventListener("mousedown", this._handleStart);
-    button.addEventListener("mouseup", this._handleEnd);
-    button.addEventListener("mouseleave", this._handleCancel);
-    button.addEventListener("click", this._handleClick);
-    button.addEventListener("contextmenu", this._handleContextMenu);
-    button.addEventListener("touchstart", this._handleStart, { passive: true });
-    button.addEventListener("touchend", this._handleEnd);
-    button.addEventListener("touchcancel", this._handleCancel);
-  }
-
   private _onInteractionStart(event: Event) {
-    if (this._disabled) return;
+    if (this.disabled) return;
 
-    this._setVisualFeedback(true);
-
+    this._isPressed = true;
     this._longPressed = false;
     this._longPressTimer = window.setTimeout(() => {
       this._longPressed = true;
-      ServiceUtils.fireEvent(this, "button-long-press", {
-        originalEvent: event,
-        active: this._active,
-        selected: this._selected,
-        entity: this._entity,
-      });
+      ServiceUtils.fireEvent(this, "button-long-press", { originalEvent: event });
       ServiceUtils.fireEvent(this, "haptic", "heavy");
     }, this._longPressDelay);
 
     this._createRippleEffect(event);
   }
 
-  private _onInteractionEnd(event: Event) {
-    if (this._disabled) return;
+  private _onInteractionEnd() {
+    if (this.disabled) return;
 
+    this._isPressed = false;
     if (this._longPressTimer) {
       clearTimeout(this._longPressTimer);
       this._longPressTimer = null;
     }
-    this._setVisualFeedback(false);
-
     if (this._longPressed) {
       this._longPressed = false;
     }
   }
 
-  private _onInteractionCancel(event: Event) {
-    this._clearAllTimers();
-    this._setVisualFeedback(false);
-    this._longPressed = false;
-  }
-
   private _onClick(event: Event) {
-    if (this._disabled || this._longPressed) return;
-    this._handleTap(event);
-  }
-
-  private _handleTap(event: Event) {
+    if (this.disabled || this._longPressed) return;
+    
     const now = Date.now();
     const timeSinceLastTap = now - this._lastTapTime;
 
@@ -148,23 +77,13 @@ export class BaseButton extends HTMLElement {
     }
 
     if (timeSinceLastTap < this._doubleClickDelay) {
-      ServiceUtils.fireEvent(this, "button-double-click", {
-        originalEvent: event,
-        active: this._active,
-        selected: this._selected,
-        entity: this._entity,
-      });
+      ServiceUtils.fireEvent(this, "button-double-click", { originalEvent: event });
       ServiceUtils.fireEvent(this, "haptic", "medium");
       this._lastTapTime = 0;
     } else {
       this._lastTapTime = now;
       this._singlePressTimer = window.setTimeout(() => {
-        ServiceUtils.fireEvent(this, "button-click", {
-          originalEvent: event,
-          active: this._active,
-          selected: this._selected,
-          entity: this._entity,
-        });
+        ServiceUtils.fireEvent(this, "button-click", { originalEvent: event });
         ServiceUtils.fireEvent(this, "haptic", "light");
         this._singlePressTimer = null;
       }, this._doubleClickDelay);
@@ -172,86 +91,44 @@ export class BaseButton extends HTMLElement {
   }
 
   private _onContextMenu(event: Event) {
-    if (this._disabled) return;
+    if (this.disabled) return;
     event.preventDefault();
-    ServiceUtils.fireEvent(this, "button-right-click", {
-      originalEvent: event,
-      active: this._active,
-      selected: this._selected,
-      entity: this._entity,
-    });
+    ServiceUtils.fireEvent(this, "button-right-click", { originalEvent: event });
     ServiceUtils.fireEvent(this, "haptic", "medium");
-  }
-
-  private _setVisualFeedback(active: boolean) {
-    const button = this.shadowRoot?.querySelector("button");
-    if (!button) return;
-    if (active) {
-      button.classList.add("pressed");
-    } else {
-      button.classList.remove("pressed");
-    }
   }
 
   private _createRippleEffect(event: Event) {
     const button = this.shadowRoot?.querySelector("button");
     if (!button) return;
 
-    const existingRipple = this.shadowRoot?.querySelector(".ripple");
-    if (existingRipple) {
-      existingRipple.remove();
-    }
-
     const ripple = document.createElement("span");
-    ripple.classList.add("ripple");
-
     const rect = button.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height) * 2;
-
-    let x, y;
-    if (event instanceof MouseEvent) {
-      x = event.clientX - rect.left;
-      y = event.clientY - rect.top;
-    } else if (event instanceof TouchEvent && event.touches && event.touches[0]) {
-      x = event.touches[0].clientX - rect.left;
-      y = event.touches[0].clientY - rect.top;
-    } else {
-      x = rect.width / 2;
-      y = rect.height / 2;
-    }
+    const size = Math.max(rect.width, rect.height);
+    const x = (event instanceof MouseEvent ? event.clientX : (event as TouchEvent).touches[0].clientX) - rect.left - size / 2;
+    const y = (event instanceof MouseEvent ? event.clientY : (event as TouchEvent).touches[0].clientY) - rect.top - size / 2;
 
     ripple.style.width = ripple.style.height = `${size}px`;
-    ripple.style.left = `${x - size / 2}px`;
-    ripple.style.top = `${y - size / 2}px`;
-
+    ripple.style.left = `${x}px`;
+    ripple.style.top = `${y}px`;
+    ripple.classList.add("ripple");
     button.appendChild(ripple);
 
-    setTimeout(() => {
-      if (ripple && ripple.parentNode) {
-        ripple.remove();
-      }
-    }, 600);
+    setTimeout(() => ripple.remove(), 600);
   }
 
-  private render() {
-    const buttonClass = `custom-button ${this._active ? "active" : ""} ${this._selected ? "selected" : ""} ${this._disabled ? "unavailable" : ""}`;
-    const iconClass = `button-icon ${this._active ? "active" : ""} ${this._selected ? "selected" : ""} ${this._disabled ? "unavailable" : ""}`;
-
-    const html = `
+  protected render(): TemplateResult {
+    return html`
       <style>
         ${buttonStyles}
-        
         .custom-button {
           position: relative;
           overflow: hidden;
           transform: translateZ(0);
           transition: transform 0.1s ease-out;
         }
-        
         .custom-button.pressed {
-          transform: scale(0.96);
+          transform: scale(0.80);
         }
-        
         .ripple {
           position: absolute;
           border-radius: 50%;
@@ -259,99 +136,42 @@ export class BaseButton extends HTMLElement {
           transform: scale(0);
           animation: ripple 0.6s ease-out;
           pointer-events: none;
-          z-index: 0;
         }
-        
         @keyframes ripple {
           to {
-            transform: scale(2);
+            transform: scale(4);
             opacity: 0;
           }
         }
-        
         .button-content {
           position: relative;
           z-index: 1;
         }
       </style>
-      
-      <div>
-        <button class="${buttonClass} ${this._small ? "small" : ""}" type="button" ?disabled="${this._disabled}">
-          <ha-icon icon="${this._icon}" class="${iconClass}"></ha-icon>
-          <div class="button-content">
-            ${this._name ? `<div class="button-name">${this._name}</div>` : ""}
-            <slot name="status"></slot>
-            <slot></slot>
-          </div>
-        </button>
-      </div>
+      <button
+        class="custom-button 
+          ${this.active ? "active" : ""} 
+          ${this.selected ? "selected" : ""} 
+          ${this.small ? "small" : ""}
+          ${this._isPressed ? "pressed" : ""}"
+        ?disabled=${this.disabled}
+        @mousedown=${this._onInteractionStart}
+        @mouseup=${this._onInteractionEnd}
+        @mouseleave=${this._onInteractionEnd}
+        @click=${this._onClick}
+        @contextmenu=${this._onContextMenu}
+        @touchstart=${this._onInteractionStart}
+        @touchend=${this._onInteractionEnd}
+        @touchcancel=${this._onInteractionEnd}
+      >
+        <ha-icon .icon=${this.icon} class="button-icon ${this.active ? "active" : ""}"></ha-icon>
+        <div class="button-content">
+          ${this.name ? html`<div class="button-name">${this.name}</div>` : ""}
+          <slot name="status"></slot>
+          <slot></slot>
+        </div>
+      </button>
     `;
-
-    if (this.shadowRoot) {
-      this.shadowRoot.innerHTML = html;
-    }
-  }
-
-  set active(value: boolean) {
-    this._active = value;
-    this.render();
-    this._setupEvents();
-  }
-
-  get active(): boolean {
-    return this._active;
-  }
-
-  set selected(value: boolean) {
-    this._selected = value;
-    this.render();
-    this._setupEvents();
-  }
-
-  get selected(): boolean {
-    return this._selected;
-  }
-
-  set disabled(value: boolean) {
-    this._disabled = value;
-    this.render();
-    this._setupEvents();
-  }
-
-  get disabled(): boolean {
-    return this._disabled;
-  }
-
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    if (oldValue === newValue) return;
-
-    switch (name) {
-      case "active":
-        this._active = newValue !== null && newValue !== "false";
-        break;
-      case "selected":
-        this._selected = newValue !== null && newValue !== "false";
-        break;
-      case "disabled":
-        this._disabled = newValue !== null && newValue !== "false";
-        break;
-      case "icon":
-        this._icon = newValue || "mdi:help-circle-outline";
-        break;
-      case "name":
-        this._name = newValue || "";
-        break;
-      case "data-entity":
-        this._entity = newValue || "";
-        break;
-    }
-
-    this.render();
-    this._setupEvents();
-  }
-
-  static get observedAttributes() {
-    return ["icon", "active", "selected", "disabled", "name", "data-entity"];
   }
 }
 

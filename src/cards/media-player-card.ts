@@ -1,4 +1,5 @@
-
+import { html, TemplateResult } from "lit";
+import { property } from "lit/decorators.js";
 import { HomeAssistant } from "custom-card-helpers";
 import { BaseCard } from "../shared/base-card";
 import { ServiceUtils } from "../shared/utils";
@@ -7,10 +8,7 @@ import { sharedStyles } from "../styles/shared";
 import { mediaPlayerStyles } from "../styles/media-player";
 
 class MediaPlayerCard extends BaseCard {
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-  }
+  @property() protected _config: any;
 
   static getStubConfig() {
     return {
@@ -23,16 +21,12 @@ class MediaPlayerCard extends BaseCard {
     if (!config.entity) {
       throw new Error("Please define a media_player entity");
     }
-    if (!config.entity.startsWith("media_player.")) {
-      console.warn(`Entity ${config.entity} might not be a media player entity`);
-    }
-    super.setConfig(config);
+    this._config = config;
   }
 
-  private _handleMediaCommand(command: string, ev: Event) {
-    ev.stopPropagation();
+  private _handleMediaCommand(command: string) {
     const entityId = this._config.entity;
-    if (!entityId || !this._hass) return;
+    if (!entityId || !this.hass) return;
 
     const commandMap = {
       play: ["media_player", "media_play"],
@@ -60,41 +54,39 @@ class MediaPlayerCard extends BaseCard {
     }
 
     const serviceData = { entity_id: entityId, ...additionalData };
-    this._hass.callService(domain, service, serviceData);
+    this.hass.callService(domain, service, serviceData);
     ServiceUtils.fireEvent(this, "haptic", "light");
   }
 
-  private _handleSourceChange(entityId: string, ev: Event) {
-    ev.stopPropagation();
+  private _handleSourceChange(ev: Event) {
+    const entityId = this._config.entity;
     const source = (ev.target as HTMLSelectElement).value;
-    if (source && this._hass) {
-      this._hass.callService("media_player", "select_source", {
+    if (source && this.hass) {
+      this.hass.callService("media_player", "select_source", {
         entity_id: entityId,
         source: source,
       });
     }
   }
 
-  private _handleToggle(ev: Event) {
-    ev.stopPropagation();
-    ServiceUtils.toggleEntity(this._hass, this._config.entity);
+  private _handleToggle() {
+    ServiceUtils.toggleEntity(this.hass, this._config.entity);
   }
 
-  private _handleMoreInfo(ev: Event) {
-    ev.stopPropagation();
+  private _handleMoreInfo() {
     ServiceUtils.showMoreInfo(this, this._config.entity);
   }
 
-  protected render() {
-    if (!this._hass || !this._config) {
-      return;
+  protected render(): TemplateResult {
+    if (!this.hass || !this._config) {
+      return html``;
     }
 
     const entityId = this._config.entity;
-    const state = this._hass.states[entityId];
+    const state = this.hass.states[entityId];
 
     if (!state) {
-      this.shadowRoot.innerHTML = `
+      return html`
         <style>
           ${sharedStyles}
           ${mediaPlayerStyles}
@@ -103,7 +95,6 @@ class MediaPlayerCard extends BaseCard {
           <div class="error">Media player entity not found: ${entityId}</div>
         </div>
       `;
-      return;
     }
 
     const name = this._config.name || state.attributes.friendly_name || entityId.split(".")[1];
@@ -125,10 +116,10 @@ class MediaPlayerCard extends BaseCard {
     const currentSource = isOn ? state.attributes.source || "" : "";
     const sourceList = isOn && state.attributes.source_list ? state.attributes.source_list : [];
 
-    const title = this._config.title ? `<h1>${this._config.title}</h1>` : "";
-    const subtitle = this._config.subtitle ? `<p>${this._config.subtitle}</p>` : "";
+    const title = this._config.title ? html`<h1>${this._config.title}</h1>` : "";
+    const subtitle = this._config.subtitle ? html`<p>${this._config.subtitle}</p>` : "";
 
-    this.shadowRoot.innerHTML = `
+    return html`
       <style>
         ${sharedStyles}
         ${mediaPlayerStyles}
@@ -162,10 +153,8 @@ class MediaPlayerCard extends BaseCard {
                 
                 <div class="custom-selector-container">
                   <div class="custom-label">Source</div>
-                  <select class="custom-selector" .entity=${entityId} @change=${(e) => this._handleSourceChange(entityId, e)}>
-                    ${sourceList
-                      .map((source) => `<option value="${source}" ${source === currentSource ? "selected" : ""}>${source}</option>`)
-                      .join("")}
+                  <select class="custom-selector" .entity=${entityId} @change=${this._handleSourceChange}>
+                    ${sourceList.map((source) => html`<option value="${source}" ?selected=${source === currentSource}>${source}</option>`)}
                   </select>
                 </div>
               </div>
@@ -179,28 +168,28 @@ class MediaPlayerCard extends BaseCard {
               
               <div class="controls-container ${isOn ? "visible" : ""}">
                 <div class="media-control-buttons">
-                  <button class="control-button" @click=${(e) => this._handleMediaCommand("previous", e)}><ha-icon icon="mdi:skip-previous"></ha-icon></button>
-                  <button class="control-button" @click=${(e) => this._handleMediaCommand("play_pause", e)}><ha-icon icon="${state.state === "playing" ? "mdi:pause" : "mdi:play"}"></ha-icon></button>
-                  <button class="control-button" @click=${(e) => this._handleMediaCommand("next", e)}><ha-icon icon="mdi:skip-next"></ha-icon></button>
+                  <button class="control-button" @click=${() => this._handleMediaCommand("previous")}><ha-icon icon="mdi:skip-previous"></ha-icon></button>
+                  <button class="control-button" @click=${() => this._handleMediaCommand("play_pause")}><ha-icon icon="${state.state === "playing" ? "mdi:pause" : "mdi:play"}"></ha-icon></button>
+                  <button class="control-button" @click=${() => this._handleMediaCommand("next")}><ha-icon icon="mdi:skip-next"></ha-icon></button>
                 </div>
                 
                 <div class="media-control-buttons">
-                  <button class="control-button" @click=${(e) => this._handleMediaCommand("volume_down", e)}><ha-icon icon="mdi:volume-minus"></ha-icon></button>
-                  <button class="control-button" @click=${(e) => this._handleMediaCommand(state.attributes.is_volume_muted ? "volume_unmute" : "volume_mute", e)}><ha-icon icon="${state.attributes.is_volume_muted ? "mdi:volume-off" : "mdi:volume-high"}"></ha-icon></button>
-                  <button class="control-button" @click=${(e) => this._handleMediaCommand("volume_up", e)}><ha-icon icon="mdi:volume-plus"></ha-icon></button>
+                  <button class="control-button" @click=${() => this._handleMediaCommand("volume_down")}><ha-icon icon="mdi:volume-minus"></ha-icon></button>
+                  <button class="control-button" @click=${() => this._handleMediaCommand(state.attributes.is_volume_muted ? "volume_unmute" : "volume_mute")}><ha-icon icon="${state.attributes.is_volume_muted ? "mdi:volume-off" : "mdi:volume-high"}"></ha-icon></button>
+                  <button class="control-button" @click=${() => this._handleMediaCommand("volume_up")}><ha-icon icon="mdi:volume-plus"></ha-icon></button>
                 </div>
                 
                 ${isTvRemote
-                  ? `
+                  ? html`
                 <div class="grid-buttons">
-                  <button class="control-button" @click=${(e) => this._handleMediaCommand("back", e)}><ha-icon icon="mdi:keyboard-return"></ha-icon></button>
-                  <button class="control-button" @click=${(e) => this._handleMediaCommand("up", e)}><ha-icon icon="mdi:chevron-up"></ha-icon></button>
-                  <button class="control-button" @click=${(e) => this._handleMediaCommand("home", e)}><ha-icon icon="mdi:home"></ha-icon></button>
-                  <button class="control-button" @click=${(e) => this._handleMediaCommand("left", e)}><ha-icon icon="mdi:chevron-left"></ha-icon></button>
-                  <button class="control-button" @click=${(e) => this._handleMediaCommand("enter", e)}><ha-icon icon="mdi:checkbox-blank-circle"></ha-icon></button>
-                  <button class="control-button" @click=${(e) => this._handleMediaCommand("right", e)}><ha-icon icon="mdi:chevron-right"></ha-icon></button>
+                  <button class="control-button" @click=${() => this._handleMediaCommand("back")}><ha-icon icon="mdi:keyboard-return"></ha-icon></button>
+                  <button class="control-button" @click=${() => this._handleMediaCommand("up")}><ha-icon icon="mdi:chevron-up"></ha-icon></button>
+                  <button class="control-button" @click=${() => this._handleMediaCommand("home")}><ha-icon icon="mdi:home"></ha-icon></button>
+                  <button class="control-button" @click=${() => this._handleMediaCommand("left")}><ha-icon icon="mdi:chevron-left"></ha-icon></button>
+                  <button class="control-button" @click=${() => this._handleMediaCommand("enter")}><ha-icon icon="mdi:checkbox-blank-circle"></ha-icon></button>
+                  <button class="control-button" @click=${() => this._handleMediaCommand("right")}><ha-icon icon="mdi:chevron-right"></ha-icon></button>
                   <div></div>
-                  <button class="control-button" @click=${(e) => this._handleMediaCommand("down", e)}><ha-icon icon="mdi:chevron-down"></ha-icon></button>
+                  <button class="control-button" @click=${() => this._handleMediaCommand("down")}><ha-icon icon="mdi:chevron-down"></ha-icon></button>
                   <div></div>
                 </div>
                 `

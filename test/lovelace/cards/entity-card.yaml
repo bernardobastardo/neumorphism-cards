@@ -1,0 +1,14 @@
+type: custom:entity-button-card
+title: Entity Button Card
+subtitle: Entity Button Card test subtitle
+entities:
+  - entity: light.ceiling_lights
+    name: Demo Light
+    buttonSize: small
+    description: hola esta es la description
+    size: 1
+  - entity: light.bed_light
+    name: Demo Light
+    buttonSize: small
+    description: hola esta es la description
+    size: 1

@@ -1,4 +1,5 @@
-
+import { html, TemplateResult } from "lit";
+import { property } from "lit/decorators.js";
 import { HomeAssistant } from "custom-card-helpers";
 import { BaseCard } from "../shared/base-card";
 import { EntityUtils, ServiceUtils } from "../shared/utils";
@@ -7,10 +8,7 @@ import { sharedStyles } from "../styles/shared";
 import { alarmCardStyles } from "../styles/alarm-card";
 
 class AlarmCard extends BaseCard {
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-  }
+  @property() protected _config: any;
 
   static getStubConfig() {
     return {
@@ -27,7 +25,7 @@ class AlarmCard extends BaseCard {
     if (!config.input_datetime) {
       throw new Error("Please define input_datetime entity");
     }
-    super.setConfig(config);
+    this._config = config;
   }
 
   private _formatTime(datetimeState: any): string {
@@ -43,38 +41,37 @@ class AlarmCard extends BaseCard {
   }
 
   private _handleTimeChange(event: Event) {
-    if (!this._config.input_datetime || !this._hass) return;
+    if (!this._config.input_datetime || !this.hass) return;
     const time = (event.target as HTMLInputElement).value;
     if (!time) return;
-    this._hass.callService("input_datetime", "set_datetime", {
+    this.hass.callService("input_datetime", "set_datetime", {
       entity_id: this._config.input_datetime,
       time: time,
     });
     ServiceUtils.fireEvent(this, "haptic", "light");
   }
 
-  protected render() {
-    if (!this._hass || !this._config) {
-      return;
+  protected render(): TemplateResult {
+    if (!this.hass || !this._config) {
+      return html``;
     }
 
-    const leftEntityState = this._hass.states[this._config.left_entity];
-    const datetimeState = this._hass.states[this._config.input_datetime];
+    const leftEntityState = this.hass.states[this._config.left_entity];
+    const datetimeState = this.hass.states[this._config.input_datetime];
 
     if (!leftEntityState || !datetimeState) {
-      this.shadowRoot.innerHTML = `<div class="error">One or more entities not found. Please check your configuration.</div>`;
-      return;
+      return html`<div class="error">One or more entities not found. Please check your configuration.</div>`;
     }
 
     const leftActive = EntityUtils.isEntityActive(leftEntityState);
-    const rightEntityState = this._config.right_entity ? this._hass.states[this._config.right_entity] : null;
+    const rightEntityState = this._config.right_entity ? this.hass.states[this._config.right_entity] : null;
     const rightActive = rightEntityState ? EntityUtils.isEntityActive(rightEntityState) : false;
     const formattedTime = this._formatTime(datetimeState);
 
-    const title = this._config.title ? `<h1>${this._config.title}</h1>` : "";
-    const subtitle = this._config.subtitle ? `<p>${this._config.subtitle}</p>` : "";
+    const title = this._config.title ? html`<h1>${this._config.title}</h1>` : "";
+    const subtitle = this._config.subtitle ? html`<p>${this._config.subtitle}</p>` : "";
 
-    this.shadowRoot.innerHTML = `
+    return html`
       <style>
         ${sharedStyles}
         ${alarmCardStyles}
@@ -92,15 +89,9 @@ class AlarmCard extends BaseCard {
             .active=${leftActive}
             .name=${this._config.left_name || ""}
             .entity=${this._config.left_entity}
-            @button-click=${() => ServiceUtils.toggleEntity(this._hass, this._config.left_entity)}
-            @button-right-click=${(e) => {
-              e.stopPropagation();
-              ServiceUtils.showMoreInfo(this, this._config.left_entity);
-            }}
-            @button-long-press=${(e) => {
-              e.stopPropagation();
-              ServiceUtils.showMoreInfo(this, this._config.left_entity);
-            }}
+            @button-click=${() => ServiceUtils.toggleEntity(this.hass, this._config.left_entity)}
+            @button-right-click=${() => ServiceUtils.showMoreInfo(this, this._config.left_entity)}
+            @button-long-press=${() => ServiceUtils.showMoreInfo(this, this._config.left_entity)}
           >
             <span slot="status" class="alarm-status">${leftActive ? "on" : "off"}</span>
           </base-button>
@@ -125,24 +116,18 @@ class AlarmCard extends BaseCard {
             ?disabled=${!this._config.right_entity}
             .entity=${this._config.right_entity || ""}
             @button-click=${() => {
-              if (this._config.right_entity) ServiceUtils.toggleEntity(this._hass, this._config.right_entity);
+              if (this._config.right_entity) ServiceUtils.toggleEntity(this.hass, this._config.right_entity);
             }}
-            @button-right-click=${(e) => {
-              if (this._config.right_entity) {
-                e.stopPropagation();
-                ServiceUtils.showMoreInfo(this, this._config.right_entity);
-              }
+            @button-right-click=${() => {
+              if (this._config.right_entity) ServiceUtils.showMoreInfo(this, this._config.right_entity);
             }}
-            @button-long-press=${(e) => {
-              if (this._config.right_entity) {
-                e.stopPropagation();
-                ServiceUtils.showMoreInfo(this, this._config.right_entity);
-              }
+            @button-long-press=${() => {
+              if (this._config.right_entity) ServiceUtils.showMoreInfo(this, this._config.right_entity);
             }}
           >
             ${this._config.right_entity
-              ? `<span slot="status" class="alarm-status">${rightActive ? "on" : "off"}</span>`
-              : `<span slot="status" class="alarm-status">No entity</span>`
+              ? html`<span slot="status" class="alarm-status">${rightActive ? "on" : "off"}</span>`
+              : html`<span slot="status" class="alarm-status">No entity</span>`
             }
           </base-button>
         </div>

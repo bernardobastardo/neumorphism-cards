@@ -1,14 +1,12 @@
-
-import { HomeAssistant } from "custom-card-helpers";
+import { html, TemplateResult } from "lit";
+import { property } from "lit/decorators.js";
 import { BaseCard } from "../shared/base-card";
 import { EntityUtils, ServiceUtils } from "../shared/utils";
 import { sharedStyles } from "../styles/shared";
+import "../shared/base-button";
 
 class EntityButtonCard extends BaseCard {
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-  }
+  @property() protected _config: any;
 
   static getStubConfig() {
     return {
@@ -21,73 +19,27 @@ class EntityButtonCard extends BaseCard {
     if (!config.entities) {
       throw new Error("Please define entities");
     }
-    super.setConfig(config);
+    this._config = config;
   }
 
-  private _handleButtonClick(entityId: string, ev: Event) {
-    ev.stopPropagation();
-    ServiceUtils.toggleEntity(this._hass, entityId);
+  private _handleButtonClick(entityId: string) {
+    console.log("Button clicked for entity:", entityId); // Temporary log
+    ServiceUtils.toggleEntity(this.hass, entityId);
   }
 
-  private _handleMoreInfo(entityId: string, ev: Event) {
-    ev.stopPropagation();
+  private _handleMoreInfo(entityId: string) {
     ServiceUtils.showMoreInfo(this, entityId);
   }
 
-  protected render() {
-    if (!this._hass || !this._config) {
-      return;
+  protected render(): TemplateResult {
+    if (!this.hass || !this._config) {
+      return html``;
     }
 
-    const entities = this._config.entities.map((entityConf) => {
-      const entityId = typeof entityConf === "string" ? entityConf : entityConf.entity;
-      const state = this._hass.states[entityId];
+    const title = this._config.title ? html`<h1>${this._config.title}</h1>` : "";
+    const subtitle = this._config.subtitle ? html`<p>${this._config.subtitle}</p>` : "";
 
-      if (!state) {
-        return `
-          <div class="entity-row size-2">
-            <div class="button-description-container">
-              <base-button icon="mdi:alert" disabled></base-button>
-            </div>
-            <div class="entity-info">
-              <div class="entity-name">${entityId} (unavailable)</div>
-              <div class="entity-description">Entity not available</div>
-            </div>
-          </div>`;
-      }
-
-      const name = entityConf.name || state.attributes.friendly_name || entityId;
-      const description = entityConf.description || "";
-      const icon = entityConf.icon || state.attributes.icon || "";
-      const size = entityConf.size === 1 ? 1 : 2;
-      const smallButton = entityConf.buttonSize === "small";
-
-      const isOn = EntityUtils.isEntityActive(state);
-      const entityIcon = EntityUtils.getEntityIcon(entityId, state, icon);
-
-      return `
-        <div class="entity-row size-${size}">
-          <div class="button-description-container">
-            <base-button
-              .small=${smallButton}
-              .icon=${entityIcon}
-              .active=${isOn}
-              @button-click=${(e) => this._handleButtonClick(entityId, e)}
-              @button-right-click=${(e) => this._handleMoreInfo(entityId, e)}
-              @button-long-press=${(e) => this._handleMoreInfo(entityId, e)}
-            ></base-button>
-          </div>
-          <div class="entity-info">
-            <div class="entity-name">${name}</div>
-            <div class="entity-description">${EntityUtils.processTemplate(description, entityId, this._hass)}</div>
-          </div>
-        </div>`;
-    }).join("");
-
-    const title = this._config.title ? `<h1>${this._config.title}</h1>` : "";
-    const subtitle = this._config.subtitle ? `<p>${this._config.subtitle}</p>` : "";
-
-    this.shadowRoot.innerHTML = `
+    return html`
       <style>
         ${sharedStyles}
       </style>
@@ -97,7 +49,51 @@ class EntityButtonCard extends BaseCard {
           ${subtitle}
         </div>
         <div class="card-content">
-          ${entities}
+          ${this._config.entities.map((entityConf) => {
+            const entityId = typeof entityConf === "string" ? entityConf : entityConf.entity;
+            const state = this.hass.states[entityId];
+
+            if (!state) {
+              return html`
+                <div class="entity-row size-2">
+                  <div class="button-description-container">
+                    <base-button icon="mdi:alert" disabled></base-button>
+                  </div>
+                  <div class="entity-info">
+                    <div class="entity-name">${entityId} (unavailable)</div>
+                    <div class="entity-description">Entity not available</div>
+                  </div>
+                </div>
+              `;
+            }
+
+            const name = entityConf.name || state.attributes.friendly_name || entityId;
+            const description = entityConf.description || "";
+            const icon = entityConf.icon || state.attributes.icon || "";
+            const size = entityConf.size === 1 ? 1 : 2;
+            const smallButton = entityConf.buttonSize === "small";
+            const isOn = EntityUtils.isEntityActive(state);
+            const entityIcon = EntityUtils.getEntityIcon(entityId, state, icon);
+
+            return html`
+              <div class="entity-row size-${size}">
+                <div class="button-description-container">
+                  <base-button
+                    .small=${smallButton}
+                    .icon=${entityIcon}
+                    .active=${isOn}
+                    @button-click=${() => this._handleButtonClick(entityId)}
+                    @button-right-click=${() => this._handleMoreInfo(entityId)}
+                    @button-long-press=${() => this._handleMoreInfo(entityId)}
+                  ></base-button>
+                </div>
+                <div class="entity-info">
+                  <div class="entity-name">${name}</div>
+                  <div class="entity-description">${EntityUtils.processTemplate(description, entityId, this.hass)}</div>
+                </div>
+              </div>
+            `;
+          })}
         </div>
       </div>
     `;

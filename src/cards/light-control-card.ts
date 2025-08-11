@@ -1,4 +1,5 @@
-
+import { html, TemplateResult } from "lit";
+import { property } from "lit/decorators.js";
 import { HomeAssistant } from "custom-card-helpers";
 import { BaseCard } from "../shared/base-card";
 import { ServiceUtils } from "../shared/utils";
@@ -8,12 +9,8 @@ import { sharedStyles } from "../styles/shared";
 import { lightControlStyles } from "../styles/light-control";
 
 class LightControlCard extends BaseCard {
-  private _selectedEntity: string | null = null;
-
-  constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
-  }
+  @property() protected _config: any;
+  @property() private _selectedEntity: string | null = null;
 
   static getStubConfig() {
     return {
@@ -26,15 +23,7 @@ class LightControlCard extends BaseCard {
     if (!config.entities) {
       throw new Error("Please define entities");
     }
-    if (
-      config.entities.some((entity) => {
-        const entityId = typeof entity === "string" ? entity : entity.entity;
-        return !entityId.startsWith("light.");
-      })
-    ) {
-      console.warn("Some entities are not lights, they may not work correctly");
-    }
-    super.setConfig(config);
+    this._config = config;
 
     if (config.entities.length > 0) {
       const firstEntity = typeof config.entities[0] === "string" ? config.entities[0] : config.entities[0].entity;
@@ -42,41 +31,21 @@ class LightControlCard extends BaseCard {
     }
   }
 
-  getLayoutOptions() {
-    const numEntities = this._config?.entities?.length || 0;
-    const columns = 4;
-    const hasTitle = this._config?.title ? 1 : 0;
-    const hasSubtitle = this._config?.subtitle ? 1 : 0;
-    const entityRows = Math.ceil(numEntities / 3);
-    const sliderRows = 2;
-    const rows = hasTitle + hasSubtitle + entityRows + sliderRows;
-    return {
-      grid_columns: columns,
-      grid_min_columns: 3,
-      grid_max_columns: 4,
-      grid_rows: rows,
-      grid_min_rows: 3,
-      grid_max_rows: Math.max(rows, 5),
-    };
-  }
-
-  private _selectEntity(entityId: string, ev: Event) {
-    ev.stopPropagation();
+  private _selectEntity(entityId: string) {
     this._selectedEntity = entityId;
-    this.render();
   }
 
   private _getCurrentBrightness(): number {
-    if (!this._selectedEntity || !this._hass) return 100;
-    const state = this._hass.states[this._selectedEntity];
+    if (!this._selectedEntity || !this.hass) return 100;
+    const state = this.hass.states[this._selectedEntity];
     if (!state || state.state === "off") return 0;
     const brightness = state.attributes.brightness || 0;
     return Math.round(brightness / 2.55);
   }
 
   private _getCurrentColorTemp(): number {
-    if (!this._selectedEntity || !this._hass) return 50;
-    const state = this._hass.states[this._selectedEntity];
+    if (!this._selectedEntity || !this.hass) return 50;
+    const state = this.hass.states[this._selectedEntity];
     if (!state || state.state === "off") return 50;
     if (state.attributes.kelvin) {
       const minTemp = 2000;
@@ -96,8 +65,8 @@ class LightControlCard extends BaseCard {
   }
 
   private _supportsColorTemp(entityId: string): boolean {
-    if (!entityId || !this._hass) return false;
-    const state = this._hass.states[entityId];
+    if (!entityId || !this.hass) return false;
+    const state = this.hass.states[entityId];
     if (!state) return false;
     return (
       state.attributes.supported_color_modes &&
@@ -107,68 +76,24 @@ class LightControlCard extends BaseCard {
   }
 
   private _setBrightness(ev: any) {
-    if (!this._selectedEntity || !this._hass) return;
-    ServiceUtils.setBrightness(this._hass, this._selectedEntity, ev.detail.value);
+    if (!this._selectedEntity || !this.hass) return;
+    ServiceUtils.setBrightness(this.hass, this._selectedEntity, ev.detail.value);
   }
 
   private _setColorTemp(ev: any) {
-    if (!this._selectedEntity || !this._hass) return;
-    ServiceUtils.setColorTemp(this._hass, this._selectedEntity, ev.detail.value);
+    if (!this._selectedEntity || !this.hass) return;
+    ServiceUtils.setColorTemp(this.hass, this._selectedEntity, ev.detail.value);
   }
 
-  protected render() {
-    if (!this._hass || !this._config) {
-      return;
+  protected render(): TemplateResult {
+    if (!this.hass || !this._config) {
+      return html``;
     }
 
-    const entities = this._config.entities
-      .map((entityConf) => {
-        const entityId = typeof entityConf === "string" ? entityConf : entityConf.entity;
-        const state = this._hass.states[entityId];
-        const isAvailable = !!state;
-        const name = entityConf.name || (isAvailable ? state.attributes.friendly_name : entityId) || entityId;
-        const icon = entityConf.icon || (isAvailable ? state.attributes.icon : "mdi:lightbulb") || "mdi:lightbulb";
-        const isOn = isAvailable && state.state === "on";
-        const isSelected = entityId === this._selectedEntity;
+    const title = this._config.title ? html`<h1>${this._config.title}</h1>` : "";
+    const subtitle = this._config.subtitle ? html`<p>${this._config.subtitle}</p>` : "";
 
-        return `
-        <div class="light-item">
-          <base-button
-            .icon=${icon}
-            .active=${isOn}
-            .selected=${isSelected}
-            .disabled=${!isAvailable}
-            .name=${name}
-            .entity=${entityId}
-            @button-click=${(e) => this._selectEntity(entityId, e.detail.originalEvent)}
-            @button-double-click=${(e) => {
-              e.stopPropagation();
-              ServiceUtils.toggle(this, entityId);
-            }}
-            @button-long-press=${(e) => {
-              e.stopPropagation();
-              ServiceUtils.showMoreInfo(this, entityId);
-            }}
-            @button-right-click=${(e) => {
-              e.stopPropagation();
-              ServiceUtils.showMoreInfo(this, entityId);
-            }}
-          >
-            <span slot="status" class="light-status">${isOn ? "on" : "off"}</span>
-          </base-button>
-        </div>
-      `;
-      })
-      .join("");
-
-    const currentBrightness = this._getCurrentBrightness();
-    const currentColorTemp = this._getCurrentColorTemp();
-    const supportsColorTemp = this._selectedEntity ? this._supportsColorTemp(this._selectedEntity) : false;
-
-    const title = this._config.title ? `<h1>${this._config.title}</h1>` : "";
-    const subtitle = this._config.subtitle ? `<p>${this._config.subtitle}</p>` : "";
-
-    this.shadowRoot.innerHTML = `
+    return html`
       <style>
         ${sharedStyles}
         ${lightControlStyles}
@@ -180,7 +105,34 @@ class LightControlCard extends BaseCard {
           ${subtitle}
         </div>
         <div class="lights-grid">
-          ${entities}
+          ${this._config.entities.map((entityConf) => {
+            const entityId = typeof entityConf === "string" ? entityConf : entityConf.entity;
+            const state = this.hass.states[entityId];
+            const isAvailable = !!state;
+            const name = entityConf.name || (isAvailable ? state.attributes.friendly_name : entityId) || entityId;
+            const icon = entityConf.icon || (isAvailable ? state.attributes.icon : "mdi:lightbulb") || "mdi:lightbulb";
+            const isOn = isAvailable && state.state === "on";
+            const isSelected = entityId === this._selectedEntity;
+
+            return html`
+              <div class="light-item">
+                <base-button
+                  .icon=${icon}
+                  .active=${isOn}
+                  .selected=${isSelected}
+                  ?disabled=${!isAvailable}
+                  .name=${name}
+                  .entity=${entityId}
+                  @button-click=${() => this._selectEntity(entityId)}
+                  @button-double-click=${() => ServiceUtils.toggle(this, entityId)}
+                  @button-long-press=${() => ServiceUtils.showMoreInfo(this, entityId)}
+                  @button-right-click=${() => ServiceUtils.showMoreInfo(this, entityId)}
+                >
+                  <span slot="status" class="light-status">${isOn ? "on" : "off"}</span>
+                </base-button>
+              </div>
+            `;
+          })}
         </div>
         
         <div class="sliders-container">
@@ -191,7 +143,7 @@ class LightControlCard extends BaseCard {
             label="Brightness"
             min="0"
             max="100"
-            .value=${currentBrightness}
+            .value=${this._getCurrentBrightness()}
             ?disabled=${!this._selectedEntity}
             @slider-change=${this._setBrightness}
           ></custom-slider>
@@ -203,8 +155,8 @@ class LightControlCard extends BaseCard {
             label="Temperature"
             min="0"
             max="100"
-            .value=${currentColorTemp}
-            ?disabled=${!this._selectedEntity || !supportsColorTemp}
+            .value=${this._getCurrentColorTemp()}
+            ?disabled=${!this._selectedEntity || !this._supportsColorTemp(this._selectedEntity)}
             @slider-change=${this._setColorTemp}
           ></custom-slider>
         </div>

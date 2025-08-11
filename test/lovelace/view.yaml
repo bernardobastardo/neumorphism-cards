@@ -9,4 +9,5 @@ views:
       margin: 0px 30px 0px 30px
     cards:
       - !include cards/refactored-cards.yaml
+      - !include cards/entity-card.yaml
     title: test
