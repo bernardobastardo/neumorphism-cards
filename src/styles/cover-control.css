@@ -1,0 +1,55 @@
+.container {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+}
+
+.sliders-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 64px;
+    margin-right: 16px;
+}
+
+.vertical-slider {
+    height: 100px;
+    transform: rotate(-90deg);
+    transform-origin: center left;
+    position: relative;
+    left: 32px;
+}
+
+.controls-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.control-item {
+    display: flex;
+    justify-content: center;
+}
+
+.control-status {
+    font-size: 0.75rem;
+    color: var(--secondary-text-color);
+}
+
+.slider-label {
+    writing-mode: vertical-lr;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    white-space: nowrap;
+    margin-bottom: 8px;
+    font-size: 0.75rem;
+    color: var(--secondary-text-color);
+}
+
+.slider-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+}

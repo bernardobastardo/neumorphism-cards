@@ -1,3 +1,4 @@
 config/*
 !config/configuration.yaml
 node_modules
+oldVersion

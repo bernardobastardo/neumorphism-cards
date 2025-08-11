@@ -1,9 +1,12 @@
 {
   "compilerOptions": {
     "target": "es2017",
+    "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
+    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true
-  }
+  },
+  "include": ["src"]
 }

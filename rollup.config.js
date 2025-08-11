@@ -11,6 +11,7 @@ export default {
   output: {
     file: "neumorphism-cards.js",
     format: "es",
+    sourcemap: true,
   },
   plugins: [
     nodeResolve(),
