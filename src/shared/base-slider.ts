@@ -11,6 +11,7 @@ export class CustomSlider extends HTMLElement {
   private _orientation: "horizontal" | "vertical" = "horizontal";
   private _showFill: boolean = true;
   private _showThumb: boolean = true;
+  private _fillStyle: "solid" | "striped" = "solid";
 
   private _isDragging: boolean = false;
   private _isScrollGesture: boolean = false;
@@ -47,6 +48,7 @@ export class CustomSlider extends HTMLElement {
     this._showFill = !this.hasAttribute("show-fill") || this.getAttribute("show-fill") !== "false";
     this._showThumb = !this.hasAttribute("show-thumb") || this.getAttribute("show-thumb") !== "false";
     this._orientation = (this.getAttribute("orientation") as "vertical" | "horizontal") || "horizontal";
+    this._fillStyle = (this.getAttribute("fill-style") as "solid" | "striped") || "solid";
 
     this.render();
     this._setupEvents();
@@ -333,7 +335,7 @@ export class CustomSlider extends HTMLElement {
   }
 
   static get observedAttributes() {
-    return ["value", "min", "max", "disabled", "label", "show-fill", "show-thumb", "orientation"];
+    return ["value", "min", "max", "disabled", "label", "show-fill", "show-thumb", "orientation", "fill-style"];
   }
 
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
@@ -364,6 +366,9 @@ export class CustomSlider extends HTMLElement {
       case "orientation":
         this._orientation = (newValue as "vertical" | "horizontal") || "horizontal";
         break;
+      case "fill-style":
+        this._fillStyle = (newValue as "solid" | "striped") || "solid";
+        break;
     }
     this.render();
   }
@@ -381,7 +386,7 @@ export class CustomSlider extends HTMLElement {
         ${this._label ? `<div class="custom-label">${this._label}</div>` : ""}
         <div class="slider-wrapper">
           <div class="slider-track ${this._disabled ? "disabled" : ""}">
-            ${this._showFill ? `<div class="slider-fill"></div>` : ""}
+            ${this._showFill ? `<div class="slider-fill ${this._fillStyle}"></div>` : ""}
             <input type="range" min="${this._min}" max="${this._max}" .value="${this._value}" 
               ?disabled="${this._disabled}" style="display: none;">
             ${this._showThumb ? `<div class="slider-thumb"></div>` : ""}

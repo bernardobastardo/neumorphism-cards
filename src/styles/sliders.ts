@@ -104,6 +104,17 @@ export const sliderStyles = css`
     pointer-events: none;
   }
 
+  .slider-fill.striped {
+    background-image: repeating-linear-gradient(
+      0deg,
+      rgba(var(--rgb-primary-text-color, 33, 150, 243), 0),
+      rgba(var(--rgb-primary-text-color, 33, 150, 243), 0) 5px,
+      rgba(var(--rgb-primary-text-color, 33, 150, 243), 0.2) 5px,
+      rgba(var(--rgb-primary-text-color, 33, 150, 243), 0.2) 10px
+    );
+    background-color: transparent;
+  }
+
   .is-pressing .slider-fill {
     transition: width 0.2s ease-out, height 0.2s ease-out;
   }

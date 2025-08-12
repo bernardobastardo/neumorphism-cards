@@ -120,6 +120,7 @@ class WindowCard extends BaseCard {
                   orientation="vertical"
                   show-fill="true"
                   show-thumb="false"
+                  fill-style="striped"
                   min="0"
                   max="100"
                   .value=${100 - this._getCurrentShutterPosition()}
