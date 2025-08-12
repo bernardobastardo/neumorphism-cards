@@ -10,7 +10,7 @@ export const coverControlStyles = css`
 
   .sliders-container {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 16px;
     width: 64px;
     margin-right: 16px;

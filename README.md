@@ -93,7 +93,7 @@ A card for controlling blinds and curtains with vertical sliders.
 **Example:**
 
 ```yaml
-type: 'custom:blind-curtain-control-card'
+type: 'custom:window-card'
 title: 'Window Coverings'
 entity_pairs:
   - name: 'Living Room'

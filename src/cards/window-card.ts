@@ -18,7 +18,7 @@ interface CoverEntityPair {
   curtain?: string;
 }
 
-class BlindCurtainControlCard extends BaseCard {
+class WindowCard extends BaseCard {
   @property() protected _config: any;
   @property() private _selectedPair: CoverEntityPair | null = null;
 
@@ -158,8 +158,8 @@ class BlindCurtainControlCard extends BaseCard {
                         .entity=${pair.blind || pair.curtain || ""}
                         @button-click=${() => this._selectPair(pair)}
                         @button-double-click=${() => {
-                          if (pair.blind) ServiceUtils.toggle(this, pair.blind);
-                          if (pair.curtain) ServiceUtils.toggle(this, pair.curtain);
+                          if (pair.blind) ServiceUtils.toggleEntity(this.hass, pair.blind);
+                          if (pair.curtain) ServiceUtils.toggleEntity(this.hass, pair.curtain);
                         }}
                         @button-long-press=${() => ServiceUtils.showMoreInfo(this, pair.blind || pair.curtain)}
                         @button-right-click=${() => ServiceUtils.showMoreInfo(this, pair.curtain || pair.blind)}
@@ -180,4 +180,4 @@ class BlindCurtainControlCard extends BaseCard {
   }
 }
 
-customElements.define("blind-curtain-control-card", BlindCurtainControlCard);
+customElements.define("window-card", WindowCard);
