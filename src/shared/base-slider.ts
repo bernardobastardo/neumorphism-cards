@@ -40,7 +40,10 @@ export class CustomSlider extends HTMLElement {
   }
 
   connectedCallback() {
-    this._value = this.hasAttribute("value") ? parseFloat(this.getAttribute("value")!) || 0 : 0;
+    // Initialize attributes, but respect the property if it was already set
+    if (this._value === 0 && this.hasAttribute("value")) {
+      this._value = parseFloat(this.getAttribute("value")!) || 0;
+    }
     this._min = this.hasAttribute("min") ? parseFloat(this.getAttribute("min")!) || 0 : 0;
     this._max = this.hasAttribute("max") ? parseFloat(this.getAttribute("max")!) || 100 : 100;
     this._disabled = this.hasAttribute("disabled");
@@ -52,6 +55,8 @@ export class CustomSlider extends HTMLElement {
 
     this.render();
     this._setupEvents();
+    // The first visual update should happen after the element is fully rendered
+    requestAnimationFrame(() => this._updateVisuals(this._value));
   }
 
   disconnectedCallback() {
@@ -329,9 +334,15 @@ export class CustomSlider extends HTMLElement {
   }
 
   set value(val: number) {
-    if (this._value === val) return;
-    this._value = Math.max(this._min, Math.min(this._max, val || 0));
-    this._updateVisuals(this._value);
+    const newValue = Math.max(this._min, Math.min(this._max, val || 0));
+    if (this._value === newValue) return;
+
+    this._value = newValue;
+
+    // Only update visuals if the element is fully rendered
+    if (this.shadowRoot?.querySelector(".slider-track")) {
+      this._updateVisuals(this._value);
+    }
   }
 
   static get observedAttributes() {
@@ -400,7 +411,6 @@ export class CustomSlider extends HTMLElement {
     }
 
     this._setupEvents();
-    requestAnimationFrame(() => this._updateVisuals(this._value));
   }
 }
 
