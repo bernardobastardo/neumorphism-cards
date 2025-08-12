@@ -277,33 +277,40 @@ export class CustomSlider extends HTMLElement {
   }
 
   private _updateVisuals(value: number) {
-    const thumb = this.shadowRoot?.querySelector(".slider-thumb") as HTMLElement;
     const fill = this.shadowRoot?.querySelector(".slider-fill") as HTMLElement;
     const track = this.shadowRoot?.querySelector(".slider-track") as HTMLElement;
     const input = this.shadowRoot?.querySelector("input");
 
-    if (!thumb || !fill || !track || !input) return;
+    if (!fill || !track || !input) return;
 
     const percent = (value - this._min) / (this._max - this._min);
-    const thumbSize = thumb.offsetWidth;
 
     if (this._orientation === "vertical") {
-      const trackHeight = track.offsetHeight;
-      const effectiveTrackHeight = trackHeight - thumbSize;
-      const thumbPosition = (thumbSize / 2) + (percent * effectiveTrackHeight);
-
       fill.style.height = `${percent * 100}%`;
-      thumb.style.top = `${thumbPosition}px`;
-      thumb.style.transform = 'translateX(-50%) translateY(-50%)';
     } else {
-      const trackWidth = track.offsetWidth;
-      const effectiveTrackWidth = trackWidth - thumbSize;
-      const thumbPosition = (thumbSize / 2) + (percent * effectiveTrackWidth);
-
       fill.style.width = `${percent * 100}%`;
-      thumb.style.left = `${thumbPosition}px`;
-      thumb.style.transform = 'translateX(-50%) translateY(-50%)';
     }
+
+    if (this._showThumb) {
+      const thumb = this.shadowRoot?.querySelector(".slider-thumb") as HTMLElement;
+      if (thumb) {
+        const thumbSize = thumb.offsetWidth;
+        if (this._orientation === "vertical") {
+          const trackHeight = track.offsetHeight;
+          const effectiveTrackHeight = trackHeight - thumbSize;
+          const thumbPosition = (thumbSize / 2) + (percent * effectiveTrackHeight);
+          thumb.style.top = `${thumbPosition}px`;
+          thumb.style.transform = 'translateX(-50%) translateY(-50%)';
+        } else {
+          const trackWidth = track.offsetWidth;
+          const effectiveTrackWidth = trackWidth - thumbSize;
+          const thumbPosition = (thumbSize / 2) + (percent * effectiveTrackWidth);
+          thumb.style.left = `${thumbPosition}px`;
+          thumb.style.transform = 'translateX(-50%) translateY(-50%)';
+        }
+      }
+    }
+
     input.value = value.toString();
   }
 
