@@ -9,7 +9,7 @@ const dev = process.env.ROLLUP_WATCH;
 export default {
   input: "src/main.ts",
   output: {
-    file: "neumorphism-cards.js",
+    file: "dist/neumorphism-cards.js",
     format: "es",
     sourcemap: true,
   },

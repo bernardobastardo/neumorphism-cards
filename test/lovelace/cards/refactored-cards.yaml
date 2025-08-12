@@ -1,6 +1,0 @@
-- type: custom:entity-button-card
-  title: Refactored Entity Button Card
-  entities:
-    - entity: light.ceiling_light
-      name: Demo Light
-

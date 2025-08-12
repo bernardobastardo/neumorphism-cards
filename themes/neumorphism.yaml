@@ -17,7 +17,16 @@ Soft UI:
   ha-card-background: var(--primary-background-color)
   card-background-color: var(--primary-background-color)
   lovelace-background: var(--primary-background-color)
-  paper-item-icon-color: var(--secondary-text-color)
+  
+  # Icon colors
+  state-icon-color: var(--primary-text-color)
+  state-icon-active-color: "#FFC107"
+  paper-item-icon-color: var(--primary-text-color)
+  paper-item-icon-active-color: "#FFC107"
+  
+  # Custom variable for the neumorphism cards
+  active-icon-color: "#FFC107"
+
   modes:
     dark:
       primary-color: "#2A593E"

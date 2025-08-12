@@ -1,0 +1,25 @@
+type: custom:window-card
+title: Control de Persianas y Cortinas
+subtitle: Gestiona tus cubiertas con un solo toque
+entity_pairs:
+  - name: Finestra del sofa
+    description: >-
+      La persiana al {{ states.cover.kitchen_window.attributes.current_position
+      }}% y el estor al X%
+    icon: mdi:window-shutter
+    blind: cover.kitchen_window
+    shutter: cover.hall_window
+  - name: Finestra de la taula
+    description: >-
+      La persiana al {{ states.cover.hall_window.attributes.current_position }}%
+      y el estor al X%
+    icon: mdi:window-shutter
+    blind: cover.hall_window
+    shutter: cover.kitchen_window
+  - name: Finestra del sofa
+    description: >-
+      La persiana al {{ states.cover.kitchen_window.attributes.current_position
+      }}% y el estor al X%
+    icon: mdi:window-shutter
+    blind: cover.kitchen_window
+    shutter: cover.hall_window

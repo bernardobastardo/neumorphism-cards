@@ -1,0 +1,11 @@
+type: custom:light-control-card
+title: Llums pasillo
+subtitle: controla les llums del pasillo
+entities:
+  - entity: light.bed_light
+    name: ewood E
+  - entity: light.ceiling_lights
+    name: shelf U
+  - entity: light.kitchen_lights
+    name: wood D
+

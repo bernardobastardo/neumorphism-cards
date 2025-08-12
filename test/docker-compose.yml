@@ -5,7 +5,8 @@ services:
     volumes:
       - ./configuration.yaml:/config/configuration.yaml:ro
       - .:/config/test:ro
-      - ..:/config/www/neumorphism-cards
+      - ../dist:/config/www/community/neumorphism-cards
+      - ../themes:/config/themes
       - ./entrypoint.sh:/usr/local/bin/entrypoint.sh
     ports:
       - "8123:8123"

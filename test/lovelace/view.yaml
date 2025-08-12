@@ -1,6 +1,5 @@
 views:
   - type: custom:masonry-layout
-    path: ''
     layout:
       width: 300
       max_cols: 3
@@ -8,6 +7,7 @@ views:
       card_margin: 30px 30px 60px 30px
       margin: 0px 30px 0px 30px
     cards:
-      - !include cards/refactored-cards.yaml
       - !include cards/entity-card.yaml
+      - !include cards/light-card.yaml
+      - !include cards/window-card.yaml
     title: test
