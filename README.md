@@ -12,39 +12,27 @@ A collection of neumorphic-designed cards for Home Assistant's Lovelace UI.
 
 ## Installation
 
-This repository contains both the Neumorphism cards and a matching theme.
-
 ### HACS (Recommended)
 
-1.  This repository is available in [HACS](https://hacs.xyz/) (Home Assistant Community Store).
-2.  Search for "Neumorphism" and click `Install`. HACS will install both the cards and the theme.
-3.  **Card Installation:** Add the following to your Lovelace resources:
+1.  This card is available in [HACS](https://hacs.xyz/) (Home Assistant Community Store).
+2.  Search for "Neumorphism Cards" and click `Install`.
+3.  Add the following to your Lovelace resources:
     ```yaml
-    lovelace:
-      resources:
-        - url: /hacsfiles/neumorphism-cards/dist/neumorphism-cards.js
-          type: module
+    resources:
+      - url: /hacsfiles/neumorphism-cards/neumorphism-cards.js
+        type: module
     ```
-4.  **Theme Installation:** After restarting Home Assistant, enable the theme by navigating to your **Profile > Theme** and selecting `Neumorphism`.
 
 ### Manual Installation
 
-1.  **Cards:** Download `neumorphism-cards.js` from the `dist/` folder in the [latest release](https://github.com/your-username/your-repo-name/releases).
-2.  Copy the file to your `www/community/neumorphism-cards` directory.
-3.  **Theme:** Download `neumorphism.yaml` from the `themes/` folder in the [latest release](https://github.com/your-username/your-repo-name/releases).
-4.  Copy the file to your `themes` directory.
-5.  Add the following to your `configuration.yaml`:
-    ```yaml
-    frontend:
-      themes: !include_dir_merge_named themes
-    ```
-6.  Add the card resources to your Lovelace configuration:
+1.  Download `neumorphism-cards.js` from the [latest release](https://github.com/your-username/your-repo-name/releases).
+2.  Copy the file to your `www` directory in your Home Assistant configuration directory.
+3.  Add the following to your Lovelace resources:
     ```yaml
     resources:
-      - url: /local/community/neumorphism-cards/neumorphism-cards.js
+      - url: /local/neumorphism-cards.js
         type: module
     ```
-7.  Restart Home Assistant and enable the theme in your profile.
 
 ## Development
 

@@ -1,5 +1,6 @@
 {
-  "name": "Neumorphism",
-  "render_readme": true,
-  "filename": "dist/neumorphism-cards.js"
+  "name": "Neumorphism Cards",
+  "content_in_root": true,
+  "filename": "neumorphism-cards.js",
+  "render_readme": true
 }

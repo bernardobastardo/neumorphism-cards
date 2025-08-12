@@ -4,7 +4,7 @@ default_config:
 
 # Load frontend themes from the themes folder
 frontend:
-  themes: !include_dir_merge_named themes
+  themes: !include_dir_merge_named test/themes
 
 lovelace:
   mode: storage
