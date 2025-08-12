@@ -167,7 +167,9 @@ class WindowCard extends BaseCard {
                       ></base-button>
                       <div class="entity-info">
                         <div class="entity-name">${pair.name}</div>
-                        <div class="entity-description">${pair.description || statusText}</div>
+                        <div class="entity-description">
+                          <base-markdown-card .hass=${this.hass} .content=${pair.description || statusText}></base-markdown-card>
+                        </div>
                       </div>
                     </div>
                   </div>
