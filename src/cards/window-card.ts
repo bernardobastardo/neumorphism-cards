@@ -101,6 +101,9 @@ class WindowCard extends BaseCard {
         ${sharedStyles}
         ${sliderStyles}
         ${coverControlStyles}
+        .controls-grid base-button {
+          --active-icon-color: var(--primary-text-color);
+        }
       </style>
 
       <div class="card-container">
