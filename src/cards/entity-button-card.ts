@@ -7,8 +7,23 @@ import "../shared/base-button";
 import "../shared/base-markdown-card";
 import "../shared/card-header";
 
+interface EntityConfig {
+  entity: string;
+  name?: string;
+  description?: string;
+  icon?: string;
+  size?: 1 | 2;
+  buttonSize?: "small" | "big";
+}
+
+interface CardConfig {
+  entities: EntityConfig[];
+  title?: string;
+  subtitle?: string;
+}
+
 class EntityButtonCard extends BaseCard {
-  @property() protected _config: any;
+  @property() protected _config!: CardConfig;
 
   static getStubConfig() {
     return {
@@ -17,7 +32,7 @@ class EntityButtonCard extends BaseCard {
     };
   }
 
-  setConfig(config) {
+  setConfig(config: CardConfig) {
     if (!config.entities) {
       throw new Error("Please define entities");
     }
@@ -25,7 +40,6 @@ class EntityButtonCard extends BaseCard {
   }
 
   private _handleButtonClick(entityId: string) {
-    console.log("Button clicked for entity:", entityId); // Temporary log
     ServiceUtils.toggleEntity(this.hass, entityId);
   }
 
@@ -47,8 +61,8 @@ class EntityButtonCard extends BaseCard {
           <card-header .hass=${this.hass} .title=${this._config.title} .subtitle=${this._config.subtitle}></card-header>
         </div>
         <div class="card-content">
-          ${this._config.entities.map((entityConf) => {
-            const entityId = typeof entityConf === "string" ? entityConf : entityConf.entity;
+          ${this._config.entities.map((entityConf: EntityConfig) => {
+            const entityId = entityConf.entity;
             const state = this.hass.states[entityId];
 
             if (!state) {
@@ -87,7 +101,9 @@ class EntityButtonCard extends BaseCard {
                 </div>
                 <div class="entity-info">
                   <div class="entity-name">${name}</div>
-                  <div class="entity-description"><base-markdown-card .hass=${this.hass} .content="${description}"></base-markdown-card></div>
+                  <div class="entity-description">
+                    <base-markdown-card .hass=${this.hass} .content="${description}"></base-markdown-card>
+                  </div>
                 </div>
               </div>
             `;

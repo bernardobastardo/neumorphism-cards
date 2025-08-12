@@ -1,4 +1,3 @@
-
 import { css } from "lit";
 
 export const buttonStyles = css`
@@ -9,8 +8,15 @@ export const buttonStyles = css`
     height: 80px;
     cursor: pointer;
     border: none;
-    transition: box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out;
-    box-shadow: var(--ha-card-box-shadow, 0px 3px 3px -2px rgba(0, 0, 0, 0.2), 0px 3px 4px 0px rgba(0, 0, 0, 0.14), 0px 1px 8px 0px rgba(0, 0, 0, 0.12));
+    transition:
+      box-shadow 0.3s ease-in-out,
+      background-color 0.3s ease-in-out;
+    box-shadow: var(
+      --ha-card-box-shadow,
+      0px 3px 3px -2px rgba(0, 0, 0, 0.2),
+      0px 3px 4px 0px rgba(0, 0, 0, 0.14),
+      0px 1px 8px 0px rgba(0, 0, 0, 0.12)
+    );
     position: relative;
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
@@ -27,17 +33,32 @@ export const buttonStyles = css`
   }
 
   .custom-button:hover {
-    box-shadow: var(--shadow-elevation-hover-box, 0px 3px 3px -2px rgba(0, 0, 0, 0.2), 0px 3px 4px 0px rgba(0, 0, 0, 0.14), 0px 1px 8px 0px rgba(0, 0, 0, 0.12));
+    box-shadow: var(
+      --shadow-elevation-hover-box,
+      0px 3px 3px -2px rgba(0, 0, 0, 0.2),
+      0px 3px 4px 0px rgba(0, 0, 0, 0.14),
+      0px 1px 8px 0px rgba(0, 0, 0, 0.12)
+    );
     background-color: rgba(255, 255, 255, 0.2);
   }
 
   .custom-button.active:hover {
-    box-shadow: var(--shadow-elevation-hover-box, inset 0px 2px 4px -1px rgba(0, 0, 0, 0.2), inset 0px 4px 5px 0px rgba(0, 0, 0, 0.14), inset 0px 1px 10px 0px rgba(0, 0, 0, 0.12));
+    box-shadow: var(
+      --shadow-elevation-hover-box,
+      inset 0px 2px 4px -1px rgba(0, 0, 0, 0.2),
+      inset 0px 4px 5px 0px rgba(0, 0, 0, 0.14),
+      inset 0px 1px 10px 0px rgba(0, 0, 0, 0.12)
+    );
     background-color: rgba(255, 255, 255, 0.2);
   }
 
   .custom-button.active {
-    box-shadow: var(--shadow-elevation-pressed-box, inset 0px 2px 4px -1px rgba(0, 0, 0, 0.2), inset 0px 4px 5px 0px rgba(0, 0, 0, 0.14), inset 0px 1px 10px 0px rgba(0, 0, 0, 0.12));
+    box-shadow: var(
+      --shadow-elevation-pressed-box,
+      inset 0px 2px 4px -1px rgba(0, 0, 0, 0.2),
+      inset 0px 4px 5px 0px rgba(0, 0, 0, 0.14),
+      inset 0px 1px 10px 0px rgba(0, 0, 0, 0.12)
+    );
     background-color: rgba(var(--lovelace-background, 33, 150, 243), 0.2);
   }
 

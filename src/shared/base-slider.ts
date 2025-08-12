@@ -1,125 +1,93 @@
+import { LitElement, html, css, TemplateResult, PropertyValues } from "lit";
+import { customElement, property, state, query } from "lit/decorators.js";
+import { classMap } from "lit/directives/class-map.js";
+import { styleMap } from "lit/directives/style-map.js";
 import { ServiceUtils } from "./utils";
 import { sliderStyles } from "../styles/sliders";
 import { sharedStyles } from "../styles/shared";
 
-export class CustomSlider extends HTMLElement {
-  private _value: number = 0;
-  private _min: number = 0;
-  private _max: number = 100;
-  private _disabled: boolean = false;
-  private _label: string = "";
-  private _orientation: "horizontal" | "vertical" = "horizontal";
-  private _showFill: boolean = true;
-  private _showThumb: boolean = true;
-  private _fillStyle: "solid" | "striped" = "solid";
+@customElement("custom-slider")
+export class CustomSlider extends LitElement {
+  // External properties
+  @property({ type: Number }) value: number = 0;
+  @property({ type: Number }) min: number = 0;
+  @property({ type: Number }) max: number = 100;
+  @property({ type: Boolean, reflect: true }) disabled: boolean = false;
+  @property({ type: String }) label: string = "";
+  @property({ type: String }) orientation: "horizontal" | "vertical" = "horizontal";
+  @property({ type: Boolean, attribute: "show-fill" }) showFill: boolean = true;
+  @property({ type: Boolean, attribute: "show-thumb" }) showThumb: boolean = true;
+  @property({ type: String, attribute: "fill-style" }) fillStyle: "solid" | "striped" = "solid";
 
-  private _isDragging: boolean = false;
-  private _isScrollGesture: boolean = false;
-  private _initialMoveHappened: boolean = false;
-  private _isReadyToDrag: boolean = false;
-  private readonly _dragThreshold: number = 10;
-  private _pressTimeout: number | null = null;
+  // Internal state
+  @state() private _isDragging: boolean = false;
+  @state() private _isPressing: boolean = false;
+  @state() private _isScrollGesture: boolean = false;
 
-  private _startX: number = 0;
-  private _startY: number = 0;
-  private _lastX: number = 0;
-  private _lastY: number = 0;
-  private _lastTime: number = 0;
+  // Inertia physics properties
+  private _posHistory: { x: number; y: number; time: number }[] = [];
+  private readonly _friction: number = 0.9; // Lower friction for more glide
+  private readonly _velocityFactor: number = 2; // Adjust for desired "flick" sensitivity
+  private readonly _minVelocity: number = 0.1;
   private _velocityX: number = 0;
   private _velocityY: number = 0;
   private _animId: number | null = null;
-  private _posHistory: { x: number; y: number; time: number }[] = [];
 
-  private readonly _friction: number = 0.70; // Increased friction for viscosity
-  private readonly _velocityFactor: number = 5; // Reduced factor for less "slip"
-  private readonly _minVelocity: number = 0.1;
+  private _initialMoveHappened: boolean = false;
+  private readonly _dragThreshold: number = 10;
+  private _startX: number = 0;
+  private _startY: number = 0;
+  private _originalValue: number = 0;
+
+  @query(".slider-track") private _trackEl!: HTMLElement;
+  @query(".slider-thumb") private _thumbEl!: HTMLElement;
+
+  // Event handlers bound in constructor
+  private _handleMouseMove: (e: MouseEvent) => void;
+  private _handleMouseUp: (e: MouseEvent) => void;
+  private _handleTouchMove: (e: TouchEvent) => void;
+  private _handleTouchEnd: (e: TouchEvent) => void;
 
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
-  }
-
-  connectedCallback() {
-    // Initialize attributes, but respect the property if it was already set
-    if (this._value === 0 && this.hasAttribute("value")) {
-      this._value = parseFloat(this.getAttribute("value")!) || 0;
-    }
-    this._min = this.hasAttribute("min") ? parseFloat(this.getAttribute("min")!) || 0 : 0;
-    this._max = this.hasAttribute("max") ? parseFloat(this.getAttribute("max")!) || 100 : 100;
-    this._disabled = this.hasAttribute("disabled");
-    this._label = this.getAttribute("label") || "";
-    this._showFill = !this.hasAttribute("show-fill") || this.getAttribute("show-fill") !== "false";
-    this._showThumb = !this.hasAttribute("show-thumb") || this.getAttribute("show-thumb") !== "false";
-    this._orientation = (this.getAttribute("orientation") as "vertical" | "horizontal") || "horizontal";
-    this._fillStyle = (this.getAttribute("fill-style") as "solid" | "striped") || "solid";
-
-    this.render();
-    this._setupEvents();
-    // The first visual update should happen after the element is fully rendered
-    requestAnimationFrame(() => this._updateVisuals(this._value));
+    this._handleMouseMove = this._onMove.bind(this);
+    this._handleMouseUp = this._onEnd.bind(this);
+    this._handleTouchMove = this._onMove.bind(this);
+    this._handleTouchEnd = this._onEnd.bind(this);
+    this._animateInertia = this._animateInertia.bind(this);
   }
 
   disconnectedCallback() {
+    super.disconnectedCallback();
     this._cleanupEvents();
-  }
-
-  private _handleMouseDown: (e: MouseEvent) => void;
-  private _handleTouchStart: (e: TouchEvent) => void;
-  private _handleMouseMove: (e: MouseEvent) => void;
-  private _handleTouchMove: (e: TouchEvent) => void;
-  private _handleMouseUp: (e: MouseEvent) => void;
-  private _handleTouchEnd: (e: TouchEvent) => void;
-
-  private _cleanupEvents() {
-    document.removeEventListener("mousemove", this._handleMouseMove);
-    document.removeEventListener("mouseup", this._handleMouseUp);
-    document.removeEventListener("touchmove", this._handleTouchMove);
-    document.removeEventListener("touchend", this._handleTouchEnd);
-    document.removeEventListener("touchcancel", this._handleTouchEnd);
-    if (this._pressTimeout) {
-      clearTimeout(this._pressTimeout);
-      this._pressTimeout = null;
+    if (this._animId) {
+      cancelAnimationFrame(this._animId);
     }
   }
 
-  private _setupEvents() {
-    this._handleMouseDown = this._onStart.bind(this, "mouse") as (e: MouseEvent) => void;
-    this._handleTouchStart = this._onStart.bind(this, "touch") as (e: TouchEvent) => void;
-    this._handleMouseMove = this._onMove.bind(this, "mouse") as (e: MouseEvent) => void;
-    this._handleTouchMove = this._onMove.bind(this, "touch") as (e: TouchEvent) => void;
-    this._handleMouseUp = this._onEnd.bind(this, "mouse") as (e: MouseEvent) => void;
-    this._handleTouchEnd = this._onEnd.bind(this, "touch") as (e: TouchEvent) => void;
+  private _onStart(e: MouseEvent | TouchEvent) {
+    if (this.disabled) return;
 
-    const track = this.shadowRoot?.querySelector(".slider-track");
-    if (!track) return;
+    if (this._animId) {
+      cancelAnimationFrame(this._animId);
+      this._animId = null;
+    }
 
-    track.addEventListener("mousedown", this._handleMouseDown);
-    track.addEventListener("touchstart", this._handleTouchStart, { passive: false });
-  }
-
-  private _onStart(type: "mouse" | "touch", e: MouseEvent | TouchEvent) {
-    if (this._disabled) return;
-
-    const x = type === "mouse" ? (e as MouseEvent).clientX : (e as TouchEvent).touches[0].clientX;
-    const y = type === "mouse" ? (e as MouseEvent).clientY : (e as TouchEvent).touches[0].clientY;
+    this._originalValue = this.value;
+    const isTouch = e.type === "touchstart";
+    const x = isTouch ? (e as TouchEvent).touches[0].clientX : (e as MouseEvent).clientX;
+    const y = isTouch ? (e as TouchEvent).touches[0].clientY : (e as MouseEvent).clientY;
 
     this._isDragging = true;
     this._isScrollGesture = false;
     this._initialMoveHappened = false;
-    this._isReadyToDrag = false;
     this._startX = x;
     this._startY = y;
+    this._isPressing = true;
+    this._posHistory = [{ x, y, time: Date.now() }];
 
-    const track = this.shadowRoot?.querySelector(".slider-track");
-    if (!track) return;
-
-    track.classList.add("is-pressing");
-    this._updateVisuals(this._calculateValueFromPosition(x, y));
-
-    this._pressTimeout = window.setTimeout(() => {
-      this._isReadyToDrag = true;
-      this._pressTimeout = null;
-    }, 200);
+    this.value = this._calculateValueFromPosition(x, y);
+    this._emitEvent("slider-input");
 
     document.addEventListener("mousemove", this._handleMouseMove);
     document.addEventListener("mouseup", this._handleMouseUp);
@@ -128,11 +96,12 @@ export class CustomSlider extends HTMLElement {
     document.addEventListener("touchcancel", this._handleTouchEnd);
   }
 
-  private _onMove(type: "mouse" | "touch", e: MouseEvent | TouchEvent) {
+  private _onMove(e: MouseEvent | TouchEvent) {
     if (!this._isDragging) return;
 
-    const x = type === "mouse" ? (e as MouseEvent).clientX : (e as TouchEvent).touches[0].clientX;
-    const y = type === "mouse" ? (e as MouseEvent).clientY : (e as TouchEvent).touches[0].clientY;
+    const isTouch = e.type.startsWith("touch");
+    const x = isTouch ? (e as TouchEvent).touches[0].clientX : (e as MouseEvent).clientX;
+    const y = isTouch ? (e as TouchEvent).touches[0].clientY : (e as MouseEvent).clientY;
 
     if (!this._initialMoveHappened) {
       const deltaX = Math.abs(x - this._startX);
@@ -140,18 +109,14 @@ export class CustomSlider extends HTMLElement {
 
       if (deltaX > this._dragThreshold || deltaY > this._dragThreshold) {
         this._initialMoveHappened = true;
-        if (type === 'touch') {
-          const isScrolling = (this._orientation === 'horizontal' && deltaY > deltaX) || 
-                              (this._orientation === 'vertical' && deltaX > deltaY);
-
+        if (isTouch) {
+          const isScrolling =
+            (this.orientation === "horizontal" && deltaY > deltaX) ||
+            (this.orientation === "vertical" && deltaX > deltaY);
           if (isScrolling) {
             this._isScrollGesture = true;
-            if (this._pressTimeout) {
-              clearTimeout(this._pressTimeout);
-              this._pressTimeout = null;
-            }
-            this.shadowRoot?.querySelector(".slider-track")?.classList.remove("is-pressing");
-            this._updateVisuals(this._value);
+            this.value = this._originalValue;
+            this._onEnd();
             return;
           }
         }
@@ -160,47 +125,40 @@ export class CustomSlider extends HTMLElement {
 
     if (this._isScrollGesture) return;
 
-    if (this._isReadyToDrag) {
-      if (type === "touch") e.preventDefault();
-      this._addPositionToHistory(x, y);
-      this._value = this._calculateValueFromPosition(x, y);
-      this._updateVisuals(this._value);
-      this._emitEvent("input");
-    }
+    if (isTouch) e.preventDefault();
+    this._addPositionToHistory(x, y);
+    this.value = this._calculateValueFromPosition(x, y);
+    this._emitEvent("slider-input");
   }
 
-  private _onEnd(type: "mouse" | "touch", e: MouseEvent | TouchEvent) {
+  private _onEnd() {
     if (!this._isDragging) return;
 
-    const track = this.shadowRoot?.querySelector(".slider-track");
-    track?.classList.remove("is-pressing");
+    this._isPressing = false;
 
-    if (this._pressTimeout) {
-      clearTimeout(this._pressTimeout);
-      this._pressTimeout = null;
-      if (!this._initialMoveHappened && !this._isScrollGesture) {
-        const x = type === "mouse" ? (e as MouseEvent).clientX : (e as TouchEvent).changedTouches[0].clientX;
-        const y = type === "mouse" ? (e as MouseEvent).clientY : (e as TouchEvent).changedTouches[0].clientY;
-        this._value = this._calculateValueFromPosition(x, y);
-        this._emitEvent("change");
-      } else {
-        this._updateVisuals(this._value);
-      }
-    } else if (!this._isScrollGesture) {
+    if (!this._isScrollGesture) {
       this._calculateFinalVelocity();
-      const velocity = this._orientation === 'vertical' ? Math.abs(this._velocityY) : Math.abs(this._velocityX);
+      const velocity = this.orientation === "vertical" ? Math.abs(this._velocityY) : Math.abs(this._velocityX);
       if (velocity > this._minVelocity) {
         this._animateInertia();
       } else {
-        this._emitEvent("change");
+        this._emitEvent("slider-change");
+        ServiceUtils.fireEvent(this, "haptic", "light");
       }
     }
 
     this._isDragging = false;
     this._isScrollGesture = false;
     this._initialMoveHappened = false;
-
     this._cleanupEvents();
+  }
+
+  private _cleanupEvents() {
+    document.removeEventListener("mousemove", this._handleMouseMove);
+    document.removeEventListener("mouseup", this._handleMouseUp);
+    document.removeEventListener("touchmove", this._handleTouchMove);
+    document.removeEventListener("touchend", this._handleTouchEnd);
+    document.removeEventListener("touchcancel", this._handleTouchEnd);
   }
 
   private _addPositionToHistory(x: number, y: number) {
@@ -232,186 +190,109 @@ export class CustomSlider extends HTMLElement {
   }
 
   private _animateInertia() {
-    const velocity = this._orientation === 'vertical' ? this._velocityY : this._velocityX;
+    const velocity = this.orientation === "vertical" ? this._velocityY : this._velocityX;
     if (Math.abs(velocity) < this._minVelocity) {
-      this._emitEvent("change");
+      this._emitEvent("slider-change");
+      ServiceUtils.fireEvent(this, "haptic", "light");
       return;
     }
 
     this._velocityX *= this._friction;
     this._velocityY *= this._friction;
 
-    const valueChange = this._orientation === 'vertical' ? -this._velocityY : this._velocityX;
-    const newValue = this._value + valueChange;
-    this._value = Math.round(Math.max(this._min, Math.min(this._max, newValue)));
-    
-    this._updateVisuals(this._value);
-    this._emitEvent("input");
+    const valueChange = this.orientation === "vertical" ? -this._velocityY : this._velocityX;
+    const newValue = this.value + valueChange;
+    this.value = Math.round(Math.max(this.min, Math.min(this.max, newValue)));
 
-    if (this._value === this._min || this._value === this._max) {
-      this._emitEvent("change");
+    this._emitEvent("slider-input");
+
+    if (this.value === this.min || this.value === this.max) {
+      this._emitEvent("slider-change");
+      ServiceUtils.fireEvent(this, "haptic", "light");
       return;
     }
 
-    this._animId = requestAnimationFrame(() => this._animateInertia());
+    this._animId = requestAnimationFrame(this._animateInertia);
   }
 
   private _calculateValueFromPosition(x: number, y: number): number {
-    const track = this.shadowRoot?.querySelector(".slider-track") as HTMLElement;
-    if (!track) return this._value;
+    if (!this._trackEl) return this.value;
 
-    const trackRect = track.getBoundingClientRect();
-    const thumb = this.shadowRoot?.querySelector(".slider-thumb") as HTMLElement;
-    const thumbSize = thumb ? thumb.offsetWidth : 0;
+    const trackRect = this._trackEl.getBoundingClientRect();
+    const thumbSize = this.showThumb && this._thumbEl ? this._thumbEl.offsetWidth : 0;
     let ratio = 0;
 
-    if (this._orientation === "vertical") {
+    if (this.orientation === "vertical") {
       const effectiveTop = trackRect.top + thumbSize / 2;
       const effectiveHeight = trackRect.height - thumbSize;
-      if (effectiveHeight <= 0) return this._value;
-      const relativeY = y - effectiveTop;
-      ratio = relativeY / effectiveHeight;
+      ratio = (y - effectiveTop) / (effectiveHeight > 0 ? effectiveHeight : 1);
     } else {
       const effectiveLeft = trackRect.left + thumbSize / 2;
       const effectiveWidth = trackRect.width - thumbSize;
-      if (effectiveWidth <= 0) return this._value;
-      const relativeX = x - effectiveLeft;
-      ratio = relativeX / effectiveWidth;
+      ratio = (x - effectiveLeft) / (effectiveWidth > 0 ? effectiveWidth : 1);
     }
 
     const constrainedRatio = Math.max(0, Math.min(1, ratio));
-    return Math.round(this._min + constrainedRatio * (this._max - this._min));
+    return Math.round(this.min + constrainedRatio * (this.max - this.min));
   }
 
-  private _updateVisuals(value: number) {
-    const fill = this.shadowRoot?.querySelector(".slider-fill") as HTMLElement;
-    const track = this.shadowRoot?.querySelector(".slider-track") as HTMLElement;
-    const input = this.shadowRoot?.querySelector("input");
+  private _emitEvent(type: "slider-input" | "slider-change") {
+    ServiceUtils.fireEvent(this, type, { value: this.value });
+  }
 
-    if (!fill || !track || !input) return;
+  protected updated(changedProperties: PropertyValues): void {
+    super.updated(changedProperties);
+    if (this.showThumb && (changedProperties.has("value") || changedProperties.has("orientation"))) {
+      this._updateThumbPosition();
+    }
+  }
 
-    const percent = (value - this._min) / (this._max - this._min);
+  private _updateThumbPosition() {
+    if (!this.showThumb || !this._thumbEl || !this._trackEl) return;
 
-    if (this._orientation === "vertical") {
-      fill.style.height = `${percent * 100}%`;
+    const percent = (this.value - this.min) / (this.max - this.min);
+    const thumbSize = this._thumbEl.offsetWidth;
+
+    if (this.orientation === "vertical") {
+      const trackHeight = this._trackEl.offsetHeight;
+      const effectiveTrackHeight = trackHeight - thumbSize;
+      const thumbPosition = thumbSize / 2 + percent * effectiveTrackHeight;
+      this._thumbEl.style.top = `${thumbPosition}px`;
     } else {
-      fill.style.width = `${percent * 100}%`;
-    }
-
-    if (this._showThumb) {
-      const thumb = this.shadowRoot?.querySelector(".slider-thumb") as HTMLElement;
-      if (thumb) {
-        const thumbSize = thumb.offsetWidth;
-        if (this._orientation === "vertical") {
-          const trackHeight = track.offsetHeight;
-          const effectiveTrackHeight = trackHeight - thumbSize;
-          const thumbPosition = (thumbSize / 2) + (percent * effectiveTrackHeight);
-          thumb.style.top = `${thumbPosition}px`;
-          thumb.style.transform = 'translateX(-50%) translateY(-50%)';
-        } else {
-          const trackWidth = track.offsetWidth;
-          const effectiveTrackWidth = trackWidth - thumbSize;
-          const thumbPosition = (thumbSize / 2) + (percent * effectiveTrackWidth);
-          thumb.style.left = `${thumbPosition}px`;
-          thumb.style.transform = 'translateX(-50%) translateY(-50%)';
-        }
-      }
-    }
-
-    input.value = value.toString();
-  }
-
-  private _emitEvent(type: "input" | "change") {
-    const eventName = type === "input" ? "slider-input" : "slider-change";
-    ServiceUtils.fireEvent(this, eventName, { value: this._value });
-    if (type === "change") {
-      ServiceUtils.fireEvent(this, "haptic", "light");
+      const trackWidth = this._trackEl.offsetWidth;
+      const effectiveTrackWidth = trackWidth - thumbSize;
+      const thumbPosition = thumbSize / 2 + percent * effectiveTrackWidth;
+      this._thumbEl.style.left = `${thumbPosition}px`;
     }
   }
 
-  get value(): number {
-    return this._value;
-  }
+  render(): TemplateResult {
+    const percent = (this.value - this.min) / (this.max - this.min);
 
-  set value(val: number) {
-    const newValue = Math.max(this._min, Math.min(this._max, val || 0));
-    if (this._value === newValue) return;
+    const containerClasses = { "slider-container": true, [this.orientation]: true };
+    const trackClasses = { "slider-track": true, disabled: this.disabled, "is-pressing": this._isPressing };
+    const fillStyles = { [this.orientation === "vertical" ? "height" : "width"]: `${percent * 100}%` };
 
-    this._value = newValue;
-
-    // Only update visuals if the element is fully rendered
-    if (this.shadowRoot?.querySelector(".slider-track")) {
-      this._updateVisuals(this._value);
-    }
-  }
-
-  static get observedAttributes() {
-    return ["value", "min", "max", "disabled", "label", "show-fill", "show-thumb", "orientation", "fill-style"];
-  }
-
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    if (oldValue === newValue) return;
-
-    switch (name) {
-      case "value":
-        this.value = parseFloat(newValue) || 0;
-        break;
-      case "min":
-        this._min = parseFloat(newValue) || 0;
-        break;
-      case "max":
-        this._max = parseFloat(newValue) || 100;
-        break;
-      case "disabled":
-        this._disabled = newValue !== null;
-        break;
-      case "label":
-        this._label = newValue || "";
-        break;
-      case "show-fill":
-        this._showFill = newValue !== "false";
-        break;
-      case "show-thumb":
-        this._showThumb = newValue !== "false";
-        break;
-      case "orientation":
-        this._orientation = (newValue as "vertical" | "horizontal") || "horizontal";
-        break;
-      case "fill-style":
-        this._fillStyle = (newValue as "solid" | "striped") || "solid";
-        break;
-    }
-    this.render();
-  }
-
-  private render() {
-    const orientationClass = this._orientation === "vertical" ? "vertical" : "horizontal";
-
-    const html = `
-      <style>
-        ${sliderStyles}
-        ${sharedStyles}
-      </style>
-      
-      <div class="slider-container ${orientationClass}">
-        ${this._label ? `<div class="custom-label">${this._label}</div>` : ""}
+    return html`
+      <div class=${classMap(containerClasses)}>
+        ${this.label ? html`<div class="custom-label">${this.label}</div>` : ""}
         <div class="slider-wrapper">
-          <div class="slider-track ${this._disabled ? "disabled" : ""}">
-            ${this._showFill ? `<div class="slider-fill ${this._fillStyle}"></div>` : ""}
-            <input type="range" min="${this._min}" max="${this._max}" .value="${this._value}" 
-              ?disabled="${this._disabled}" style="display: none;">
-            ${this._showThumb ? `<div class="slider-thumb"></div>` : ""}
+          <div class="slider-track ${classMap(trackClasses)}" @mousedown=${this._onStart} @touchstart=${this._onStart}>
+            ${this.showFill ? html`<div class="slider-fill ${this.fillStyle}" style=${styleMap(fillStyles)}></div>` : ""}
+            ${this.showThumb ? html`<div class="slider-thumb"></div>` : ""}
           </div>
         </div>
       </div>
     `;
-
-    if (this.shadowRoot) {
-      this.shadowRoot.innerHTML = html;
-    }
-
-    this._setupEvents();
   }
-}
 
-customElements.define("custom-slider", CustomSlider);
+  static styles = [
+    sharedStyles,
+    sliderStyles,
+    css`
+      .slider-thumb {
+        transform: translate(-50%, -50%);
+      }
+    `,
+  ];
+}

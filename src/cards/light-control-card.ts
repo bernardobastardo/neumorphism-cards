@@ -9,8 +9,20 @@ import "../shared/card-header";
 import { sharedStyles } from "../styles/shared";
 import { lightControlStyles } from "../styles/light-control";
 
+interface LightEntityConfig {
+  entity: string;
+  name?: string;
+  icon?: string;
+}
+
+interface CardConfig {
+  entities: (string | LightEntityConfig)[];
+  title?: string;
+  subtitle?: string;
+}
+
 class LightControlCard extends BaseCard {
-  @property() protected _config: any;
+  @property() protected _config!: CardConfig;
   @property() private _selectedEntity: string | null = null;
 
   static getStubConfig() {
@@ -20,7 +32,7 @@ class LightControlCard extends BaseCard {
     };
   }
 
-  setConfig(config) {
+  setConfig(config: CardConfig) {
     if (!config.entities) {
       throw new Error("Please define entities");
     }
@@ -123,7 +135,7 @@ class LightControlCard extends BaseCard {
         ${sharedStyles}
         ${lightControlStyles}
       </style>
-      
+
       <div class="card-container">
         <div class="card-header">
           <card-header .hass=${this.hass} .title=${this._config.title} .subtitle=${this._config.subtitle}></card-header>
@@ -133,8 +145,8 @@ class LightControlCard extends BaseCard {
             const entityId = typeof entityConf === "string" ? entityConf : entityConf.entity;
             const state = this.hass.states[entityId];
             const isAvailable = !!state;
-            const name = entityConf.name || (isAvailable ? state.attributes.friendly_name : entityId) || entityId;
-            const icon = entityConf.icon || (isAvailable ? state.attributes.icon : "mdi:lightbulb") || "mdi:lightbulb";
+            const name = (typeof entityConf !== 'string' && entityConf.name) || (isAvailable ? state.attributes.friendly_name : entityId) || entityId;
+            const icon = (typeof entityConf !== 'string' && entityConf.icon) || (isAvailable ? state.attributes.icon : "mdi:lightbulb") || "mdi:lightbulb";
             const isOn = isAvailable && state.state === "on";
             const isSelected = entityId === this._selectedEntity;
 
@@ -158,7 +170,7 @@ class LightControlCard extends BaseCard {
             `;
           })}
         </div>
-        
+
         <div class="sliders-container">
           <custom-slider
             show-fill="true"
@@ -171,7 +183,7 @@ class LightControlCard extends BaseCard {
             ?disabled=${!this._selectedEntity}
             @slider-change=${this._setBrightness}
           ></custom-slider>
-          
+
           <custom-slider
             show-fill="true"
             show-thumb="true"

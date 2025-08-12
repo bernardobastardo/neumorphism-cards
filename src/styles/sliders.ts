@@ -1,4 +1,3 @@
-
 import { css } from "lit";
 
 export const sliderStyles = css`
@@ -90,7 +89,12 @@ export const sliderStyles = css`
     height: 100%;
     background-color: var(--card-background-color, var(--ha-card-background, var(--card-background-color, white)));
     border-radius: var(--ha-card-border-radius, 14px);
-    box-shadow: var(--ha-card-box-shadow, 0px 2px 2px -1px rgba(0, 0, 0, 0.2), 0px 2px 3px 0px rgba(0, 0, 0, 0.14), 0px 1px 5px 0px rgba(0, 0, 0, 0.12));
+    box-shadow: var(
+      --ha-card-box-shadow,
+      0px 2px 2px -1px rgba(0, 0, 0, 0.2),
+      0px 2px 3px 0px rgba(0, 0, 0, 0.14),
+      0px 1px 5px 0px rgba(0, 0, 0, 0.12)
+    );
     overflow: hidden;
     cursor: pointer;
   }
@@ -116,7 +120,9 @@ export const sliderStyles = css`
   }
 
   .is-pressing .slider-fill {
-    transition: width 0.2s ease-out, height 0.2s ease-out;
+    transition:
+      width 0.2s ease-out,
+      height 0.2s ease-out;
   }
 
   .slider-thumb {
@@ -135,7 +141,9 @@ export const sliderStyles = css`
   }
 
   .is-pressing .slider-thumb {
-    transition: left 0.2s ease-out, top 0.2s ease-out;
+    transition:
+      left 0.2s ease-out,
+      top 0.2s ease-out;
   }
 
   .slider-container.vertical .slider-thumb {

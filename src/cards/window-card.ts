@@ -18,8 +18,14 @@ interface CoverEntityPair {
   shutter?: string;
 }
 
+interface CardConfig {
+  entity_pairs: CoverEntityPair[];
+  title?: string;
+  subtitle?: string;
+}
+
 class WindowCard extends BaseCard {
-  @property() protected _config: any;
+  @property() protected _config!: CardConfig;
   @property() private _selectedPair: CoverEntityPair | null = null;
 
   static getStubConfig() {
@@ -29,7 +35,7 @@ class WindowCard extends BaseCard {
     };
   }
 
-  setConfig(config) {
+  setConfig(config: CardConfig) {
     if (!config.entity_pairs) {
       throw new Error("Please define entity_pairs");
     }
@@ -76,6 +82,13 @@ class WindowCard extends BaseCard {
     });
   }
 
+  private _toggleCover(entityId: string) {
+    const state = this.hass.states[entityId];
+    if (!state) return;
+    const service = state.state === "open" ? "close_cover" : "open_cover";
+    this.hass.callService("cover", service, { entity_id: entityId });
+  }
+
   protected render(): TemplateResult {
     if (!this.hass || !this._config) {
       return html``;
@@ -89,12 +102,12 @@ class WindowCard extends BaseCard {
         ${sliderStyles}
         ${coverControlStyles}
       </style>
-      
+
       <div class="card-container">
         <div class="card-header">
           <card-header .hass=${this.hass} .title=${this._config.title} .subtitle=${this._config.subtitle}></card-header>
         </div>
-        
+
         <div class="card-content">
           <div class="container">
             <div class="sliders-container">
@@ -103,8 +116,8 @@ class WindowCard extends BaseCard {
                 <custom-slider
                   style="height: ${sliderHeight}px"
                   orientation="vertical"
-                  show-fill="true"
-                  show-thumb="false"
+                  .showFill=${true}
+                  .showThumb=${false}
                   min="0"
                   max="100"
                   .value=${100 - this._getCurrentBlindPosition()}
@@ -112,14 +125,14 @@ class WindowCard extends BaseCard {
                   @slider-change=${this._setBlindPosition}
                 ></custom-slider>
               </div>
-              
+
               <div class="slider-column">
                 <div class="slider-label">S</div>
                 <custom-slider
                   style="height: ${sliderHeight}px"
                   orientation="vertical"
-                  show-fill="true"
-                  show-thumb="false"
+                  .showFill=${true}
+                  .showThumb=${false}
                   fill-style="striped"
                   min="0"
                   max="100"
@@ -129,18 +142,23 @@ class WindowCard extends BaseCard {
                 ></custom-slider>
               </div>
             </div>
-            
+
             <div class="controls-grid">
               ${this._config.entity_pairs.map((pair) => {
                 const blindState = pair.blind ? this.hass.states[pair.blind] : null;
                 const shutterState = pair.shutter ? this.hass.states[pair.shutter] : null;
                 const isBlindAvailable = !!blindState;
                 const isShutterAvailable = !!shutterState;
-                const isBlindOpen = isBlindAvailable && (blindState.state === "open" || (blindState.attributes.current_position || 0) > 0);
-                const isShutterOpen = isShutterAvailable && (shutterState.state === "open" || (shutterState.attributes.current_position || 0) > 0);
+                const isBlindOpen =
+                  isBlindAvailable && (blindState.state === "open" || (blindState.attributes.current_position || 0) > 0);
+                const isShutterOpen =
+                  isShutterAvailable &&
+                  (shutterState.state === "open" || (shutterState.attributes.current_position || 0) > 0);
                 let statusText = "";
                 if (isBlindAvailable && isShutterAvailable) {
-                  statusText = `Blind: ${isBlindOpen ? "open" : "closed"} | Shutter: ${isShutterOpen ? "open" : "closed"}`;
+                  statusText = `Blind: ${isBlindOpen ? "open" : "closed"} | Shutter: ${
+                    isShutterOpen ? "open" : "closed"
+                  }`;
                 } else if (isBlindAvailable) {
                   statusText = `Blind: ${isBlindOpen ? "open" : "closed"}`;
                 } else if (isShutterAvailable) {
@@ -159,16 +177,25 @@ class WindowCard extends BaseCard {
                         .entity=${pair.blind || pair.shutter || ""}
                         @button-click=${() => this._selectPair(pair)}
                         @button-double-click=${() => {
-                          if (pair.blind) ServiceUtils.toggleEntity(this.hass, pair.blind);
-                          if (pair.shutter) ServiceUtils.toggleEntity(this.hass, pair.shutter);
+                          if (pair.blind) this._toggleCover(pair.blind);
+                          if (pair.shutter) this._toggleCover(pair.shutter);
                         }}
-                        @button-long-press=${() => ServiceUtils.showMoreInfo(this, pair.blind || pair.shutter)}
-                        @button-right-click=${() => ServiceUtils.showMoreInfo(this, pair.shutter || pair.blind)}
+                        @button-long-press=${() => {
+                          const entityId = pair.blind || pair.shutter;
+                          if (entityId) ServiceUtils.showMoreInfo(this, entityId);
+                        }}
+                        @button-right-click=${() => {
+                          const entityId = pair.shutter || pair.blind;
+                          if (entityId) ServiceUtils.showMoreInfo(this, entityId);
+                        }}
                       ></base-button>
                       <div class="entity-info">
                         <div class="entity-name">${pair.name}</div>
                         <div class="entity-description">
-                          <base-markdown-card .hass=${this.hass} .content=${pair.description || statusText}></base-markdown-card>
+                          <base-markdown-card
+                            .hass=${this.hass}
+                            .content=${pair.description || statusText}
+                          ></base-markdown-card>
                         </div>
                       </div>
                     </div>

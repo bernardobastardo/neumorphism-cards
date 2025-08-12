@@ -2,11 +2,33 @@
 
 A collection of neumorphic-designed cards for Home Assistant's Lovelace UI.
 
+## Screenshots
+
+<!--
+  ADD SCREENSHOTS HERE
+  For example:
+  ![Light Control Card](https://example.com/light-control-card.png)
+-->
+
 ## Installation
 
-1.  Copy the `neumorphism-cards.js` file to your `www` directory in your Home Assistant configuration directory.
-2.  Add the following to your Lovelace resources:
+### HACS (Recommended)
 
+1.  This card is available in [HACS](https://hacs.xyz/) (Home Assistant Community Store).
+2.  Search for "Neumorphism Cards" and click `Install`.
+3.  Add the following to your `configuration.yaml` or through the UI:
+    ```yaml
+    lovelace:
+      resources:
+        - url: /hacsfiles/neumorphism-cards/neumorphism-cards.js
+          type: module
+    ```
+
+### Manual Installation
+
+1.  Download `neumorphism-cards.js` from the [latest release](https://github.com/your-username/your-repo-name/releases).
+2.  Copy the file to your `www` directory in your Home Assistant configuration directory.
+3.  Add the following to your Lovelace resources:
     ```yaml
     resources:
       - url: /local/neumorphism-cards.js

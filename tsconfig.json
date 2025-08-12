@@ -6,7 +6,9 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "strict": true,
+    "useDefineForClassFields": false,
   },
   "include": ["src"]
 }

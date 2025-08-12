@@ -1,81 +1,53 @@
 import { html, TemplateResult } from "lit";
 import { property } from "lit/decorators.js";
-import { HomeAssistant } from "custom-card-helpers";
 import { BaseCard } from "../shared/base-card";
 import { ServiceUtils } from "../shared/utils";
-import "../shared/base-button";
-import "../shared/card-header";
 import { sharedStyles } from "../styles/shared";
 import { mediaPlayerStyles } from "../styles/media-player";
+import "../shared/base-button";
+import "../shared/card-header";
+
+interface CardConfig {
+  entity: string;
+  title?: string;
+  subtitle?: string;
+}
 
 class MediaPlayerCard extends BaseCard {
-  @property() protected _config: any;
+  @property() protected _config!: CardConfig;
 
   static getStubConfig() {
     return {
-      entity: "media_player.demo_media_player",
+      entity: "media_player.demo_player",
       title: "Media Player Card",
     };
   }
 
-  setConfig(config) {
+  setConfig(config: CardConfig) {
     if (!config.entity) {
-      throw new Error("Please define a media_player entity");
+      throw new Error("Please define an entity");
     }
     this._config = config;
   }
 
-  private _handleMediaCommand(command: string) {
-    const entityId = this._config.entity;
-    if (!entityId || !this.hass) return;
-
-    const commandMap = {
-      play: ["media_player", "media_play"],
-      pause: ["media_player", "media_pause"],
-      play_pause: ["media_player", "media_play_pause"],
-      next: ["media_player", "media_next_track"],
-      previous: ["media_player", "media_previous_track"],
-      volume_up: ["media_player", "volume_up"],
-      volume_down: ["media_player", "volume_down"],
-      volume_mute: ["media_player", "volume_mute", { is_volume_muted: true }],
-      volume_unmute: ["media_player", "volume_mute", { is_volume_muted: false }],
-      up: ["remote", "send_command", { command: "UP" }],
-      down: ["remote", "send_command", { command: "DOWN" }],
-      left: ["remote", "send_command", { command: "LEFT" }],
-      right: ["remote", "send_command", { command: "RIGHT" }],
-      enter: ["remote", "send_command", { command: "SELECT" }],
-      back: ["remote", "send_command", { command: "BACK" }],
-      home: ["remote", "send_command", { command: "HOME" }],
-    };
-
-    const [domain, service, additionalData] = commandMap[command] || [];
-    if (!domain || !service) {
-      console.error(`Unknown command: ${command}`);
-      return;
-    }
-
-    const serviceData = { entity_id: entityId, ...additionalData };
-    this.hass.callService(domain, service, serviceData);
-    ServiceUtils.fireEvent(this, "haptic", "light");
+  private _handlePlayPause() {
+    this.hass.callService("media_player", "media_play_pause", { entity_id: this._config.entity });
   }
 
-  private _handleSourceChange(ev: Event) {
-    const entityId = this._config.entity;
-    const source = (ev.target as HTMLSelectElement).value;
-    if (source && this.hass) {
-      this.hass.callService("media_player", "select_source", {
-        entity_id: entityId,
-        source: source,
-      });
-    }
+  private _handlePrevious() {
+    this.hass.callService("media_player", "media_previous_track", { entity_id: this._config.entity });
   }
 
-  private _handleToggle() {
-    ServiceUtils.toggleEntity(this.hass, this._config.entity);
+  private _handleNext() {
+    this.hass.callService("media_player", "media_next_track", { entity_id: this._config.entity });
   }
 
-  private _handleMoreInfo() {
-    ServiceUtils.showMoreInfo(this, this._config.entity);
+  private _handleVolumeChange(e: any) {
+    const volume = parseFloat(e.target.value);
+    this.hass.callService("media_player", "volume_set", {
+      entity_id: this._config.entity,
+      volume_level: volume,
+    });
   }
 
   protected render(): TemplateResult {
@@ -83,116 +55,45 @@ class MediaPlayerCard extends BaseCard {
       return html``;
     }
 
-    const entityId = this._config.entity;
-    const state = this.hass.states[entityId];
-
+    const state = this.hass.states[this._config.entity];
     if (!state) {
-      return html`
-        <style>
-          ${sharedStyles}
-          ${mediaPlayerStyles}
-        </style>
-        <div class="card-container">
-          <div class="error">Media player entity not found: ${entityId}</div>
-        </div>
-      `;
+      return html` <ha-card>Entity not found: ${this._config.entity}</ha-card> `;
     }
 
-    const name = this._config.name || state.attributes.friendly_name || entityId.split(".")[1];
-    const icon = this._config.icon || state.attributes.icon || "mdi:cast";
-    const isOn = ["playing", "paused", "on", "idle"].includes(state.state);
-    const mediaTitle = state.attributes.media_title || "";
-    const mediaArtist = state.attributes.media_artist || "";
-    const mediaSeries = state.attributes.media_series_title || "";
-    let mediaInfo = "";
-    if (mediaTitle) {
-      mediaInfo += mediaTitle;
-      if (mediaArtist) mediaInfo += ` - ${mediaArtist}`;
-      if (mediaSeries && mediaSeries !== mediaTitle) mediaInfo += ` (${mediaSeries})`;
-    } else {
-      mediaInfo = state.state;
-    }
-    const isTvRemote = this._config.remote_type === "tv" || entityId.includes("tv") || state.attributes.device_class === "tv";
-    const containerClass = isOn ? "expanded" : "collapsed";
-    const currentSource = isOn ? state.attributes.source || "" : "";
-    const sourceList = isOn && state.attributes.source_list ? state.attributes.source_list : [];
+    const isPlaying = state.state === "playing";
+    const artwork = state.attributes.entity_picture_local || state.attributes.entity_picture;
+    const volume = state.attributes.volume_level || 0;
 
     return html`
       <style>
         ${sharedStyles}
         ${mediaPlayerStyles}
       </style>
-      
       <div class="card-container">
-        <div class="card-header">
-          <card-header .hass=${this.hass} .title=${this._config.title} .subtitle=${this._config.subtitle}></card-header>
-        </div>
-        
-        <div class="media-card-container ${containerClass}">
-          <div class="media-layout">
-            <div class="left-side-content">
-              <base-button
-                .icon=${icon}
-                .active=${isOn}
-                .entity=${entityId}
-                @button-click=${this._handleToggle}
-                @button-long-press=${this._handleMoreInfo}
-                @button-right-click=${this._handleMoreInfo}
-              >
-                <span slot="status" class="media-status">${isOn ? "" : state.state}</span>
-              </base-button>
-              
-              <div class="tv-on-container ${isOn ? "" : "hidden"}">
-                <div class="entity-info">
-                  <div class="entity-name">${name}</div>
-                  <div class="entity-description">${mediaInfo}</div>
-                </div>
-                
-                <div class="custom-selector-container">
-                  <div class="custom-label">Source</div>
-                  <select class="custom-selector" .entity=${entityId} @change=${this._handleSourceChange}>
-                    ${sourceList.map((source) => html`<option value="${source}" ?selected=${source === currentSource}>${source}</option>`)}
-                  </select>
-                </div>
-              </div>
-            </div>
-            
-            <div class="right-side-content">
-              <div class="entity-info ${isOn ? "hidden" : ""}">
-                <div class="entity-name">${name}</div>
-                <div class="entity-description">${mediaInfo}</div>
-              </div>
-              
-              <div class="controls-container ${isOn ? "visible" : ""}">
-                <div class="media-control-buttons">
-                  <button class="control-button" @click=${() => this._handleMediaCommand("previous")}><ha-icon icon="mdi:skip-previous"></ha-icon></button>
-                  <button class="control-button" @click=${() => this._handleMediaCommand("play_pause")}><ha-icon icon="${state.state === "playing" ? "mdi:pause" : "mdi:play"}"></ha-icon></button>
-                  <button class="control-button" @click=${() => this._handleMediaCommand("next")}><ha-icon icon="mdi:skip-next"></ha-icon></button>
-                </div>
-                
-                <div class="media-control-buttons">
-                  <button class="control-button" @click=${() => this._handleMediaCommand("volume_down")}><ha-icon icon="mdi:volume-minus"></ha-icon></button>
-                  <button class="control-button" @click=${() => this._handleMediaCommand(state.attributes.is_volume_muted ? "volume_unmute" : "volume_mute")}><ha-icon icon="${state.attributes.is_volume_muted ? "mdi:volume-off" : "mdi:volume-high"}"></ha-icon></button>
-                  <button class="control-button" @click=${() => this._handleMediaCommand("volume_up")}><ha-icon icon="mdi:volume-plus"></ha-icon></button>
-                </div>
-                
-                ${isTvRemote
-                  ? html`
-                <div class="grid-buttons">
-                  <button class="control-button" @click=${() => this._handleMediaCommand("back")}><ha-icon icon="mdi:keyboard-return"></ha-icon></button>
-                  <button class="control-button" @click=${() => this._handleMediaCommand("up")}><ha-icon icon="mdi:chevron-up"></ha-icon></button>
-                  <button class="control-button" @click=${() => this._handleMediaCommand("home")}><ha-icon icon="mdi:home"></ha-icon></button>
-                  <button class="control-button" @click=${() => this._handleMediaCommand("left")}><ha-icon icon="mdi:chevron-left"></ha-icon></button>
-                  <button class="control-button" @click=${() => this._handleMediaCommand("enter")}><ha-icon icon="mdi:checkbox-blank-circle"></ha-icon></button>
-                  <button class="control-button" @click=${() => this._handleMediaCommand("right")}><ha-icon icon="mdi:chevron-right"></ha-icon></button>
-                  <div></div>
-                  <button class="control-button" @click=${() => this._handleMediaCommand("down")}><ha-icon icon="mdi:chevron-down"></ha-icon></button>
-                  <div></div>
-                </div>
-                `
-                  : ""}
-              </div>
-            </div>
+        <card-header .hass=${this.hass} .title=${this._config.title} .subtitle=${this._config.subtitle}></card-header>
+        <div class="artwork-container" style="background-image: url(${artwork})"></div>
+        <div class="controls-container">
+          <div class="track-info">
+            <div class="track-title">${state.attributes.media_title || "Unknown Title"}</div>
+            <div class="track-artist">${state.attributes.media_artist || "Unknown Artist"}</div>
+          </div>
+          <div class="media-controls">
+            <base-button icon="mdi:skip-previous" @click=${this._handlePrevious}></base-button>
+            <base-button .icon=${isPlaying ? "mdi:pause" : "mdi:play"} @click=${this._handlePlayPause}></base-button>
+            <base-button icon="mdi:skip-next" @click=${this._handleNext}></base-button>
+          </div>
+          <div class="volume-container">
+            <ha-icon icon="mdi:volume-low"></ha-icon>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              .value=${volume}
+              @input=${this._handleVolumeChange}
+              class="volume-slider"
+            />
+            <ha-icon icon="mdi:volume-high"></ha-icon>
           </div>
         </div>
       </div>

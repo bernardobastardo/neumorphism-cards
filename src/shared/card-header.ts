@@ -15,10 +15,14 @@ export class CardHeader extends LitElement {
     }
 
     const titleContent = this.title
-      ? html`<div class="title"><base-markdown-card .hass=${this.hass} .content="${this.title}"></base-markdown-card></div>`
+      ? html`<div class="title">
+          <base-markdown-card .hass=${this.hass} .content="${this.title}"></base-markdown-card>
+        </div>`
       : "";
     const subtitleContent = this.subtitle
-      ? html`<div class="subtitle"><base-markdown-card .hass=${this.hass} .content="${this.subtitle}"></base-markdown-card></div>`
+      ? html`<div class="subtitle">
+          <base-markdown-card .hass=${this.hass} .content="${this.subtitle}"></base-markdown-card>
+        </div>`
       : "";
 
     return html`
@@ -33,8 +37,7 @@ export class CardHeader extends LitElement {
           color: var(--secondary-text-color);
         }
       </style>
-      ${titleContent}
-      ${subtitleContent}
+      ${titleContent} ${subtitleContent}
     `;
   }
 

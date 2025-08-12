@@ -67,7 +67,7 @@ export class BaseButton extends LitElement {
 
   private _onClick(event: Event) {
     if (this.disabled || this._longPressed) return;
-    
+
     const now = Date.now();
     const timeSinceLastTap = now - this._lastTapTime;
 
@@ -104,8 +104,10 @@ export class BaseButton extends LitElement {
     const ripple = document.createElement("span");
     const rect = button.getBoundingClientRect();
     const size = Math.max(rect.width, rect.height);
-    const x = (event instanceof MouseEvent ? event.clientX : (event as TouchEvent).touches[0].clientX) - rect.left - size / 2;
-    const y = (event instanceof MouseEvent ? event.clientY : (event as TouchEvent).touches[0].clientY) - rect.top - size / 2;
+    const x =
+      (event instanceof MouseEvent ? event.clientX : (event as TouchEvent).touches[0].clientX) - rect.left - size / 2;
+    const y =
+      (event instanceof MouseEvent ? event.clientY : (event as TouchEvent).touches[0].clientY) - rect.top - size / 2;
 
     ripple.style.width = ripple.style.height = `${size}px`;
     ripple.style.left = `${x}px`;
@@ -119,15 +121,14 @@ export class BaseButton extends LitElement {
   protected render(): TemplateResult {
     return html`
       <style>
-        ${buttonStyles}
-        .custom-button {
+        ${buttonStyles} .custom-button {
           position: relative;
           overflow: hidden;
           transform: translateZ(0);
           transition: transform 0.1s ease-out;
         }
         .custom-button.pressed {
-          transform: scale(0.80);
+          transform: scale(0.8);
         }
         .ripple {
           position: absolute;

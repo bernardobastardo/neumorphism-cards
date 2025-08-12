@@ -74,4 +74,3 @@ export class BaseMarkdownCard extends LitElement {
     return this;
   }
 }
-
