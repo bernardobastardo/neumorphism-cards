@@ -15,7 +15,7 @@ interface CoverEntityPair {
   description?: string;
   icon?: string;
   blind?: string;
-  curtain?: string;
+  shutter?: string;
 }
 
 class WindowCard extends BaseCard {
@@ -25,7 +25,7 @@ class WindowCard extends BaseCard {
   static getStubConfig() {
     return {
       entity_pairs: [{ name: "Demo", blind: "cover.demo_blind" }],
-      title: "Blind Curtain Control Card",
+      title: "Window Control Card",
     };
   }
 
@@ -51,9 +51,9 @@ class WindowCard extends BaseCard {
     return state.attributes.current_position !== undefined ? state.attributes.current_position : state.state === "open" ? 100 : 0;
   }
 
-  private _getCurrentCurtainPosition(): number {
-    if (!this._selectedPair || !this._selectedPair.curtain || !this.hass) return 0;
-    const state = this.hass.states[this._selectedPair.curtain];
+  private _getCurrentShutterPosition(): number {
+    if (!this._selectedPair || !this._selectedPair.shutter || !this.hass) return 0;
+    const state = this.hass.states[this._selectedPair.shutter];
     if (!state) return 0;
     return state.attributes.current_position !== undefined ? state.attributes.current_position : state.state === "open" ? 100 : 0;
   }
@@ -67,11 +67,11 @@ class WindowCard extends BaseCard {
     });
   }
 
-  private _setCurtainPosition(ev: any) {
-    if (!this._selectedPair || !this._selectedPair.curtain || !this.hass) return;
+  private _setShutterPosition(ev: any) {
+    if (!this._selectedPair || !this._selectedPair.shutter || !this.hass) return;
     const invertedPosition = 100 - ev.detail.value;
     this.hass.callService("cover", "set_cover_position", {
-      entity_id: this._selectedPair.curtain,
+      entity_id: this._selectedPair.shutter,
       position: invertedPosition,
     });
   }
@@ -114,7 +114,7 @@ class WindowCard extends BaseCard {
               </div>
               
               <div class="slider-column">
-                <div class="slider-label">C</div>
+                <div class="slider-label">S</div>
                 <custom-slider
                   style="height: ${sliderHeight}px"
                   orientation="vertical"
@@ -122,9 +122,9 @@ class WindowCard extends BaseCard {
                   show-thumb="false"
                   min="0"
                   max="100"
-                  .value=${100 - this._getCurrentCurtainPosition()}
-                  ?disabled=${!this._selectedPair || !this._selectedPair.curtain}
-                  @slider-change=${this._setCurtainPosition}
+                  .value=${100 - this._getCurrentShutterPosition()}
+                  ?disabled=${!this._selectedPair || !this._selectedPair.shutter}
+                  @slider-change=${this._setShutterPosition}
                 ></custom-slider>
               </div>
             </div>
@@ -132,18 +132,18 @@ class WindowCard extends BaseCard {
             <div class="controls-grid">
               ${this._config.entity_pairs.map((pair) => {
                 const blindState = pair.blind ? this.hass.states[pair.blind] : null;
-                const curtainState = pair.curtain ? this.hass.states[pair.curtain] : null;
+                const shutterState = pair.shutter ? this.hass.states[pair.shutter] : null;
                 const isBlindAvailable = !!blindState;
-                const isCurtainAvailable = !!curtainState;
+                const isShutterAvailable = !!shutterState;
                 const isBlindOpen = isBlindAvailable && (blindState.state === "open" || (blindState.attributes.current_position || 0) > 0);
-                const isCurtainOpen = isCurtainAvailable && (curtainState.state === "open" || (curtainState.attributes.current_position || 0) > 0);
+                const isShutterOpen = isShutterAvailable && (shutterState.state === "open" || (shutterState.attributes.current_position || 0) > 0);
                 let statusText = "";
-                if (isBlindAvailable && isCurtainAvailable) {
-                  statusText = `Blind: ${isBlindOpen ? "open" : "closed"} | Curtain: ${isCurtainOpen ? "open" : "closed"}`;
+                if (isBlindAvailable && isShutterAvailable) {
+                  statusText = `Blind: ${isBlindOpen ? "open" : "closed"} | Shutter: ${isShutterOpen ? "open" : "closed"}`;
                 } else if (isBlindAvailable) {
                   statusText = `Blind: ${isBlindOpen ? "open" : "closed"}`;
-                } else if (isCurtainAvailable) {
-                  statusText = `Curtain: ${isCurtainOpen ? "open" : "closed"}`;
+                } else if (isShutterAvailable) {
+                  statusText = `Shutter: ${isShutterOpen ? "open" : "closed"}`;
                 }
 
                 return html`
@@ -152,17 +152,17 @@ class WindowCard extends BaseCard {
                       <base-button
                         small
                         .icon=${pair.icon || "mdi:window-shutter"}
-                        .active=${isBlindOpen || isCurtainOpen}
+                        .active=${isBlindOpen || isShutterOpen}
                         .selected=${this._selectedPair === pair}
-                        ?disabled=${!isBlindAvailable && !isCurtainAvailable}
-                        .entity=${pair.blind || pair.curtain || ""}
+                        ?disabled=${!isBlindAvailable && !isShutterAvailable}
+                        .entity=${pair.blind || pair.shutter || ""}
                         @button-click=${() => this._selectPair(pair)}
                         @button-double-click=${() => {
                           if (pair.blind) ServiceUtils.toggleEntity(this.hass, pair.blind);
-                          if (pair.curtain) ServiceUtils.toggleEntity(this.hass, pair.curtain);
+                          if (pair.shutter) ServiceUtils.toggleEntity(this.hass, pair.shutter);
                         }}
-                        @button-long-press=${() => ServiceUtils.showMoreInfo(this, pair.blind || pair.curtain)}
-                        @button-right-click=${() => ServiceUtils.showMoreInfo(this, pair.curtain || pair.blind)}
+                        @button-long-press=${() => ServiceUtils.showMoreInfo(this, pair.blind || pair.shutter)}
+                        @button-right-click=${() => ServiceUtils.showMoreInfo(this, pair.shutter || pair.blind)}
                       ></base-button>
                       <div class="entity-info">
                         <div class="entity-name">${pair.name}</div>

@@ -78,15 +78,15 @@ entities:
   - light.bedroom_lamp
 ```
 
-### Blind & Curtain Control Card
+### Blind & Shutter Control Card
 
-A card for controlling blinds and curtains with vertical sliders.
+A card for controlling blinds and shutters with vertical sliders.
 
 **Options:**
 
 | Name           | Type   | Description                               |
 | -------------- | ------ | ----------------------------------------- |
-| `entity_pairs` | list   | A list of blind and curtain entity pairs. |
+| `entity_pairs` | list   | A list of blind and shutter entity pairs. |
 | `title`        | string | The title of the card.                    |
 | `subtitle`     | string | The subtitle of the card.                 |
 
@@ -98,7 +98,7 @@ title: 'Window Coverings'
 entity_pairs:
   - name: 'Living Room'
     blind: cover.living_room_blind
-    curtain: cover.living_room_curtain
+    shutter: cover.living_room_shutter
 ```
 
 ### Alarm Card
