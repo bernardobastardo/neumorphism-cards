@@ -7,6 +7,11 @@ import "../shared/card-header";
 @customElement("neumorphism-header-card")
 export class HeaderCard extends BaseCard {
   
+  public static async getConfigElement() {
+    await import("./header-card-editor");
+    return document.createElement("neumorphism-header-card-editor");
+  }
+
   static getStubConfig() {
     return {
       title: "My Header",
