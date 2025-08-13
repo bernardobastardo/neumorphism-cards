@@ -25,6 +25,11 @@ interface CardConfig {
 class EntityButtonCard extends BaseCard {
   @property() protected _config!: CardConfig;
 
+  public static async getConfigElement() {
+    await import("./entity-button-card-editor");
+    return document.createElement("neumorphism-entity-button-card-editor");
+  }
+
   static getStubConfig() {
     return {
       entities: [{ entity: "light.demo_light" }],
