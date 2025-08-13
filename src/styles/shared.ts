@@ -16,7 +16,7 @@ export const sharedStyles = css`
   }
 
   .card-header {
-    margin-bottom: 16px;
+    margin-bottom: 32px;
   }
 
   .card-title {
