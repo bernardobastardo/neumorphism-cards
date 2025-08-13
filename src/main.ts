@@ -5,3 +5,4 @@ import "./cards/light-control-card";
 import "./cards/window-card";
 import "./cards/alarm-card";
 import "./cards/media-player-card";
+import "./cards/header-card";

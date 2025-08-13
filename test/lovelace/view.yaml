@@ -10,4 +10,5 @@ views:
       - !include cards/entity-card.yaml
       - !include cards/light-card.yaml
       - !include cards/window-card.yaml
+      - !include cards/header-card.yaml
     title: test

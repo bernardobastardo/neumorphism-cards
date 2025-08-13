@@ -1,0 +1,15 @@
+type: vertical-stack
+cards:
+  - type: custom:neumorphism-header-card
+    title: test
+    subtitle: test
+  - type: history-graph
+    entities:
+      - sun.sun
+  - type: custom:gap-card
+    height: 32px
+  - type: tile
+    entity: sensor.backup_backup_manager_state
+    features_position: bottom
+    vertical: false
+
