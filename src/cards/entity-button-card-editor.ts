@@ -16,29 +16,34 @@ const cardSchema = [
 const entitySchema = [
   { name: "entity", selector: { entity: {} } },
   { name: "name", selector: { text: {} } },
-  { name: "icon", selector: { icon: {} } },
   { name: "description", selector: { text: {} } },
+  { name: "icon", selector: { icon: {} } },
   {
-    name: "buttonSize",
-    selector: {
-      select: {
-        options: [
-          { value: "big", label: "Big" },
-          { value: "small", label: "Small" },
-        ],
+    type: "grid",
+    schema: [
+      {
+        name: "buttonSize",
+        selector: {
+          select: {
+            options: [
+              { value: "big", label: "Big" },
+              { value: "small", label: "Small" },
+            ],
+          },
+        },
       },
-    },
-  },
-  {
-    name: "size",
-    selector: {
-      select: {
-        options: [
-          { value: "full", label: "Full width" },
-          { value: "half", label: "Half width" },
-        ],
+      {
+        name: "size",
+        selector: {
+          select: {
+            options: [
+              { value: "full", label: "Full width" },
+              { value: "half", label: "Half width" },
+            ],
+          },
+        },
       },
-    },
+    ],
   },
 ];
 
