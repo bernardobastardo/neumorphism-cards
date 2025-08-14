@@ -15,9 +15,14 @@ const cardSchema = [
 
 const entitySchema = [
   { name: "entity", selector: { entity: {} } },
-  { name: "name", selector: { text: {} } },
+  {
+    type: "grid",
+    schema: [
+      { name: "icon", selector: { icon: {} } },
+      { name: "name", selector: { text: {} } },
+    ],
+  },
   { name: "description", selector: { text: {} } },
-  { name: "icon", selector: { icon: {} } },
   {
     type: "grid",
     schema: [
