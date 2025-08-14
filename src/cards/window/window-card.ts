@@ -1,6 +1,5 @@
 import { html, TemplateResult } from "lit";
 import { property } from "lit/decorators.js";
-import { HomeAssistant } from "custom-card-helpers";
 import { BaseCard } from "../../shared/base-card";
 import { ServiceUtils } from "../../shared/utils";
 import "../../shared/base-button";

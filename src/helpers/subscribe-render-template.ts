@@ -1,5 +1,5 @@
 import { HomeAssistant } from "custom-card-helpers";
-import { Connection, MessageBase, UnsubscribeFunc } from "home-assistant-js-websocket";
+import { UnsubscribeFunc } from "home-assistant-js-websocket";
 
 export interface RenderTemplateResult {
   result: string;

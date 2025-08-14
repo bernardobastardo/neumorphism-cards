@@ -1,7 +1,6 @@
 import { html, TemplateResult } from "lit";
 import { property } from "lit/decorators.js";
 import { BaseCard } from "../../shared/base-card";
-import { ServiceUtils } from "../../shared/utils";
 import { sharedStyles } from "../../styles/shared";
 import { mediaPlayerStyles } from "../../styles/media-player";
 import "../../shared/base-button";

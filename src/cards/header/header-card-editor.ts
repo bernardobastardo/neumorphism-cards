@@ -1,15 +1,6 @@
 import { LitElement, html, TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { HomeAssistant, LovelaceCardEditor, fireEvent } from "custom-card-helpers";
-import { any, object, string } from "superstruct";
-
-const cardConfigStruct = object({
-  type: string(),
-  title: string(),
-  subtitle: string(),
-  view_layout: any(),
-});
-
 @customElement("neumorphism-header-card-editor")
 export class HeaderCardEditor extends LitElement implements LovelaceCardEditor {
   @property({ attribute: false }) public hass?: HomeAssistant;

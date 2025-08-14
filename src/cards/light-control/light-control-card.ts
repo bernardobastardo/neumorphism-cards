@@ -1,6 +1,5 @@
 import { html, TemplateResult } from "lit";
 import { property } from "lit/decorators.js";
-import { HomeAssistant } from "custom-card-helpers";
 import { BaseCard } from "../../shared/base-card";
 import { ServiceUtils } from "../../shared/utils";
 import "../../shared/base-button";
@@ -103,7 +102,7 @@ class LightControlCard extends BaseCard {
     if (!state) return;
 
     const sliderValue = ev.detail.value;
-    let serviceData: { entity_id: string; kelvin?: number; color_temp?: number } = { entity_id: this._selectedEntity };
+    const serviceData: { entity_id: string; kelvin?: number; color_temp?: number } = { entity_id: this._selectedEntity };
 
     if (state.attributes.supported_color_modes.includes("kelvin")) {
       const minKelvin = state.attributes.min_kelvin || 2000;
