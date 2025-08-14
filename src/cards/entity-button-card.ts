@@ -12,7 +12,7 @@ interface EntityConfig {
   name?: string;
   description?: string;
   icon?: string;
-  size?: 1 | 2;
+  size?: "full" | "half" | 1 | 2;
   buttonSize?: "small" | "big";
 }
 
