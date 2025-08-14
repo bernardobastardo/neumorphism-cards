@@ -9,6 +9,7 @@ export class BaseButton extends LitElement {
   @property({ type: Boolean }) selected: boolean = false;
   @property({ type: Boolean }) disabled: boolean = false;
   @property({ type: Boolean }) small: boolean = false;
+  @property({ type: Boolean }) flashOnActivate: boolean = false;
   @property() name: string = "";
   @property() entity: string = "";
 
@@ -165,7 +166,10 @@ export class BaseButton extends LitElement {
         @touchend=${this._onInteractionEnd}
         @touchcancel=${this._onInteractionEnd}
       >
-        <ha-icon .icon=${this.icon} class="button-icon ${this.active ? "active" : ""}"></ha-icon>
+        <ha-icon
+          .icon=${this.icon}
+          class="button-icon ${this.active ? "active" : ""} ${this.flashOnActivate ? "flash-on-activate" : ""}"
+        ></ha-icon>
         <div class="button-content">
           ${this.name ? html`<div class="button-name">${this.name}</div>` : ""}
           <slot name="status"></slot>

@@ -78,6 +78,15 @@ export const buttonStyles = css`
 
   .button-icon {
     color: var(--primary-text-color);
+    transition: color 0.1s ease-in-out;
+  }
+
+  .button-icon.flash-on-activate {
+    transition: color 1s ease-in-out;
+  }
+
+  .button-icon.flash-on-activate.active {
+    transition: none;
   }
 
   ha-icon {

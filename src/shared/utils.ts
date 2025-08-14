@@ -6,7 +6,7 @@ export const ServiceUtils = {
   },
 
   turnOnScene: (hass: HomeAssistant, entityId: string) => {
-    hass.callService("scene", "turn_on", { entity_id: entityId });
+    return hass.callService("scene", "turn_on", { entity_id: entityId });
   },
 
   setBrightness: (hass: HomeAssistant, entityId: string, brightness: number) => {

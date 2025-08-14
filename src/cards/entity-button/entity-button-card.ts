@@ -1,5 +1,5 @@
 import { html, TemplateResult } from "lit";
-import { property } from "lit/decorators.js";
+import { property, state } from "lit/decorators.js";
 import { BaseCard } from "../../shared/base-card";
 import { EntityUtils, ServiceUtils } from "../../shared/utils";
 import { sharedStyles } from "../../styles/shared";
@@ -24,6 +24,7 @@ interface CardConfig {
 
 class EntityButtonCard extends BaseCard {
   @property() protected _config!: CardConfig;
+  @state() private _sceneActivatedStates: Record<string, boolean> = {};
 
   public static async getConfigElement() {
     await import("./entity-button-card-editor");
@@ -47,7 +48,18 @@ class EntityButtonCard extends BaseCard {
   private _handleButtonClick(entityId: string) {
     const domain = entityId.split(".")[0];
     if (domain === "scene") {
-      ServiceUtils.turnOnScene(this.hass, entityId);
+      ServiceUtils.turnOnScene(this.hass, entityId)
+        .then(() => {
+          this._sceneActivatedStates[entityId] = true;
+          this.requestUpdate();
+          setTimeout(() => {
+            this._sceneActivatedStates[entityId] = false;
+            this.requestUpdate();
+          }, 1000);
+        })
+        .catch((err: any) => {
+          console.error("Error turning on scene", err);
+        });
     } else {
       ServiceUtils.toggleEntity(this.hass, entityId);
     }
@@ -94,8 +106,10 @@ class EntityButtonCard extends BaseCard {
             const icon = entityConf.icon || state.attributes.icon || "";
             const size = (entityConf.size as any) == "half" || (entityConf.size as any) == 1 ? 1 : 2;
             const smallButton = entityConf.buttonSize === "small";
-            const isOn = EntityUtils.isEntityActive(state);
+            const isOn = EntityUtils.isEntityActive(state) || this._sceneActivatedStates[entityId];
             const entityIcon = EntityUtils.getEntityIcon(entityId, state, icon);
+            const domain = entityId.split(".")[0];
+            const isScene = domain === "scene";
 
             return html`
               <div class="entity-row size-${size}">
@@ -104,6 +118,7 @@ class EntityButtonCard extends BaseCard {
                     .small=${smallButton}
                     .icon=${entityIcon}
                     .active=${isOn}
+                    .flashOnActivate=${isScene}
                     @button-click=${() => this._handleButtonClick(entityId)}
                     @button-right-click=${() => this._handleMoreInfo(entityId)}
                     @button-long-press=${() => this._handleMoreInfo(entityId)}
