@@ -60,6 +60,7 @@ export class EntityButtonCardEditor
   @property({ attribute: false }) public hass?: HomeAssistant;
   @state() private _config?: Record<string, any>;
   @state() private _selectedTab = 0;
+  @state() private _yamlTabs = new Set<number>();
 
   public setConfig(config: Record<string, any>): void {
     assert(config, cardConfigStruct);
@@ -110,10 +111,17 @@ export class EntityButtonCardEditor
     if (!this._config) return html``;
     const entities = this._config.entities || [];
     const entityConf = entities[this._selectedTab];
+    const isYaml = this._yamlTabs.has(this._selectedTab);
 
     return html`
       <div class="tab-content">
         <div class="toolbar">
+          <ha-icon-button
+            @click=${this._toggleYaml}
+            class=${isYaml ? "active" : ""}
+          >
+            <ha-icon icon="mdi:code-braces"></ha-icon>
+          </ha-icon-button>
           <div class="actions">
             <ha-icon-button
               @click=${() => this._moveEntity(-1)}
@@ -135,13 +143,20 @@ export class EntityButtonCardEditor
             </ha-icon-button>
           </div>
         </div>
-        <ha-form
-          .hass=${this.hass}
-          .data=${entityConf}
-          .schema=${entitySchema}
-          .computeLabel=${this._computeLabel}
-          @value-changed=${this._entityValueChanged}
-        ></ha-form>
+        ${
+          isYaml
+            ? html`<ha-yaml-editor
+                .defaultValue=${entityConf}
+                @value-changed=${this._entityYamlChanged}
+              ></ha-yaml-editor>`
+            : html`<ha-form
+                .hass=${this.hass}
+                .data=${entityConf}
+                .schema=${entitySchema}
+                .computeLabel=${this._computeLabel}
+                @value-changed=${this._entityValueChanged}
+              ></ha-form>`
+        }
       </div>
     `;
   }
@@ -207,6 +222,23 @@ export class EntityButtonCardEditor
     fireEvent(this, "config-changed", { config: newConfig });
   }
 
+  private _toggleYaml(): void {
+    if (this._yamlTabs.has(this._selectedTab)) {
+      this._yamlTabs.delete(this._selectedTab);
+    } else {
+      this._yamlTabs.add(this._selectedTab);
+    }
+    this.requestUpdate();
+  }
+
+  private _entityYamlChanged(ev: CustomEvent): void {
+    if (!this._config || !this.hass || !ev.detail.isValid) return;
+    const entities = [...this._config.entities];
+    entities[this._selectedTab] = ev.detail.value;
+    const newConfig = { ...this._config, entities };
+    fireEvent(this, "config-changed", { config: newConfig });
+  }
+
   private _computeLabel(schema: any) {
     return schema.name;
   }
@@ -232,7 +264,7 @@ export class EntityButtonCardEditor
     }
     .toolbar {
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
       align-items: center;
     }
     .actions {
@@ -241,6 +273,9 @@ export class EntityButtonCardEditor
     }
     ha-icon-button {
       color: var(--secondary-text-color);
+    }
+    ha-icon-button.active {
+      color: var(--primary-color);
     }
   `;
 }
