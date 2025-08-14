@@ -45,7 +45,12 @@ class EntityButtonCard extends BaseCard {
   }
 
   private _handleButtonClick(entityId: string) {
-    ServiceUtils.toggleEntity(this.hass, entityId);
+    const domain = entityId.split(".")[0];
+    if (domain === "scene") {
+      ServiceUtils.turnOnScene(this.hass, entityId);
+    } else {
+      ServiceUtils.toggleEntity(this.hass, entityId);
+    }
   }
 
   private _handleMoreInfo(entityId: string) {

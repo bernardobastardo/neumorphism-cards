@@ -5,6 +5,10 @@ export const ServiceUtils = {
     hass.callService("homeassistant", "toggle", { entity_id: entityId });
   },
 
+  turnOnScene: (hass: HomeAssistant, entityId: string) => {
+    hass.callService("scene", "turn_on", { entity_id: entityId });
+  },
+
   setBrightness: (hass: HomeAssistant, entityId: string, brightness: number) => {
     hass.callService("light", "turn_on", {
       entity_id: entityId,

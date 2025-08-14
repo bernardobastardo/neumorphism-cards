@@ -1,0 +1,7 @@
+
+# Example scenes.yaml entry
+- id: my_unique_id # <-- Required for editor to work.
+  name: Romantic
+  entities:
+    light.bed_light: on
+
