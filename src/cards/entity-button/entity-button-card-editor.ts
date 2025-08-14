@@ -7,7 +7,7 @@ import {
   fireEvent,
 } from "custom-card-helpers";
 import { assert } from "superstruct";
-import { cardConfigStruct } from "../shared/config-structs";
+import { cardConfigStruct } from "../../shared/config-structs";
 
 const cardSchema = [
   { name: "title", selector: { text: {} } },

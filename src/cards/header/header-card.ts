@@ -1,8 +1,8 @@
 import { html, TemplateResult } from "lit";
 import { customElement } from "lit/decorators.js";
-import { BaseCard } from "../shared/base-card";
-import { sharedStyles } from "../styles/shared";
-import "../shared/card-header";
+import { BaseCard } from "../../shared/base-card";
+import { sharedStyles } from "../../styles/shared";
+import "../../shared/card-header";
 
 @customElement("neumorphism-header-card")
 export class HeaderCard extends BaseCard {

@@ -1,11 +1,11 @@
 import { html, TemplateResult } from "lit";
 import { property } from "lit/decorators.js";
-import { BaseCard } from "../shared/base-card";
-import { EntityUtils, ServiceUtils } from "../shared/utils";
-import { sharedStyles } from "../styles/shared";
-import "../shared/base-button";
-import "../shared/base-markdown-card";
-import "../shared/card-header";
+import { BaseCard } from "../../shared/base-card";
+import { EntityUtils, ServiceUtils } from "../../shared/utils";
+import { sharedStyles } from "../../styles/shared";
+import "../../shared/base-button";
+import "../../shared/base-markdown-card";
+import "../../shared/card-header";
 
 interface EntityConfig {
   entity: string;
