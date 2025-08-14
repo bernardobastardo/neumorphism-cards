@@ -1,4 +1,5 @@
 import { LitElement, html, TemplateResult, css } from "lit";
+import { keyed } from "lit/directives/keyed.js";
 import { customElement, property, state } from "lit/decorators.js";
 import {
   HomeAssistant,
@@ -143,7 +144,8 @@ export class EntityButtonCardEditor
             </ha-icon-button>
           </div>
         </div>
-        ${
+        ${keyed(
+          this._selectedTab,
           isYaml
             ? html`<ha-yaml-editor
                 .defaultValue=${entityConf}
@@ -156,7 +158,7 @@ export class EntityButtonCardEditor
                 .computeLabel=${this._computeLabel}
                 @value-changed=${this._entityValueChanged}
               ></ha-form>`
-        }
+        )}
       </div>
     `;
   }
