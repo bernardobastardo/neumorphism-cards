@@ -87,7 +87,7 @@ class EntityButtonCard extends BaseCard {
             const name = entityConf.name || state.attributes.friendly_name || entityId;
             const description = entityConf.description || "";
             const icon = entityConf.icon || state.attributes.icon || "";
-            const size = entityConf.size === 1 ? 1 : 2;
+            const size = (entityConf.size as any) == "half" || (entityConf.size as any) == 1 ? 1 : 2;
             const smallButton = entityConf.buttonSize === "small";
             const isOn = EntityUtils.isEntityActive(state);
             const entityIcon = EntityUtils.getEntityIcon(entityId, state, icon);
