@@ -81,12 +81,21 @@ export const buttonStyles = css`
     transition: color 0.1s ease-in-out;
   }
 
-  .button-icon.flash-on-activate {
-    transition: color 1s ease-in-out;
+  /* FLASH BEHAVIOR */
+  /* Make the activation instant */
+  .custom-button.flash-on-activate.active {
+    transition: ha-card-box-shadow 0s;
+  }
+  .custom-button.flash-on-activate.active .button-icon.active {
+    transition: color 0s;
   }
 
-  .button-icon.flash-on-activate.active {
-    transition: none;
+  /* Make the deactivation slow */
+  .custom-button.flash-on-activate{
+    transition: ha-card-box-shadow 1s ease-in-out;
+  }
+  .custom-button.flash-on-activate .button-icon {
+    transition: color 1s ease-in-out;
   }
 
   ha-icon {

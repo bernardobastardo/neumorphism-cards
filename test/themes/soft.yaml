@@ -34,11 +34,11 @@ Soft UI:
       primary-background-color: "#171717"
       primary-text-color: "#e0e0e0"
       ha-card-box-shadow: "9px 9px 19px #0d0d0d,  -9px -9px 19px #212121"
-      soft-ui-pressed: " inset 9px 9px 19px #0d0d0d,  inset -9px -9px 19px #212121"
+      shadow-elevation-pressed-box: " inset 9px 9px 19px #0d0d0d,  inset -9px -9px 19px #212121"
     light:
       primary-color: "#2A593E"
       light-primary-color: "#9CA6A0"
       primary-background-color: "#e0e0e0"
       primary-text-color: "#171717"
       ha-card-box-shadow: "9px 9px 19px #acacac, -9px -9px 19px #ffffff"
-      soft-ui-pressed: "inset 9px 9px 19px #acacac,  inset -9px -9px 19px #ffffff;"
+      shadow-elevation-pressed-box: "inset 9px 9px 19px #acacac,  inset -9px -9px 19px #ffffff;"

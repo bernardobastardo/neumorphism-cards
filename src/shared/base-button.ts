@@ -155,7 +155,8 @@ export class BaseButton extends LitElement {
           ${this.active ? "active" : ""} 
           ${this.selected ? "selected" : ""} 
           ${this.small ? "small" : ""}
-          ${this._isPressed ? "pressed" : ""}"
+          ${this._isPressed ? "pressed" : ""}
+          ${this.flashOnActivate ? "flash-on-activate" : ""}"
         ?disabled=${this.disabled}
         @mousedown=${this._onInteractionStart}
         @mouseup=${this._onInteractionEnd}
@@ -168,7 +169,7 @@ export class BaseButton extends LitElement {
       >
         <ha-icon
           .icon=${this.icon}
-          class="button-icon ${this.active ? "active" : ""} ${this.flashOnActivate ? "flash-on-activate" : ""}"
+          class="button-icon ${this.active ? "active" : ""}"
         ></ha-icon>
         <div class="button-content">
           ${this.name ? html`<div class="button-name">${this.name}</div>` : ""}
